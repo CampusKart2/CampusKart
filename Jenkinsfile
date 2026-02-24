@@ -1,22 +1,14 @@
 pipeline {
-    agent { label 'dev' }
+  agent { label 'dev' }
 
-    stages {
-        stage('Checkout Repository') {
-            steps {
-                checkout scm
-            }
-        }
-
-        stage('Verify Workspace') {
-            steps {
-                sh '''
-                    echo "Current directory:"
-                    pwd
-                    echo "Repository contents:"
-                    ls -la
-                '''
-            }
-        }
+  stages {
+    stage('Checkout') {
+      steps { checkout scm }
     }
+    stage('Verify') {
+      steps {
+        sh 'hostname; pwd; ls -la'
+      }
+    }
+  }
 }
