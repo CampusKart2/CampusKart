@@ -37,13 +37,10 @@ pipeline {
     withCredentials([string(credentialsId: 'TESTRIGOR_TOKEN', variable: 'TR_TOKEN')]) {
       sh '''
         curl -X POST \
-          -H "Content-type: application/json" \
-          -H "auth-token: $TR_TOKEN" \
-          --data '{
-            "storedValues": {},
-            "customName": "Smoke - Jenkins Build #'"$BUILD_NUMBER"'"
-          }' \
-          https://api.testrigor.com/api/v1/apps/YOUR_APP_ID/retest
+  -H 'Content-type: application/json' \
+  -H 'auth-token: 87effdd8-8baa-46bb-bf0e-d43b9ce20253' \
+  --data '{ "storedValues": { "storedValueName1": "Value" }, "customName": "optionalNameForRun" }' \
+  https://api.testrigor.com/api/v1/apps/zikCmbLzeWkEez2bz/retest
       '''
     }
   }
