@@ -1,5 +1,5 @@
 pipeline {
-    agent dev-agent
+    agent { label 'dev' }
 
     stages {
         stage('Checkout Repository') {
