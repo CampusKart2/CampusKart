@@ -33,7 +33,6 @@ pipeline {
     }
 	
 	stage('Smoke (testRigor)') {
-  when { branch 'develop' }   // change to your dev branch name
   steps {
     withCredentials([string(credentialsId: 'TESTRIGOR_TOKEN', variable: 'TR_TOKEN')]) {
       sh '''
