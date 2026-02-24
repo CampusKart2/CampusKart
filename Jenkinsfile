@@ -1,8 +1,8 @@
 pipeline {
-  agent { label 'dev-agent' }   // <-- must match the label on your Dev node
+  agent { label 'dev-agent' }
 
   options {
-    skipDefaultCheckout(true) // prevents Jenkins from checking out twice
+    skipDefaultCheckout(true)
   }
 
   stages {
@@ -12,14 +12,22 @@ pipeline {
       }
     }
 
-    stage('Verify (Dev Server)') {
+    stage('Build Frontend') {
+      steps {
+        dir('Frontend') {
+          sh '''
+            npm ci
+            npm run build
+          '''
+        }
+      }
+    }
+
+    stage('Deploy to ~/CampusKart') {
       steps {
         sh '''
-          echo "NODE_NAME=$NODE_NAME"
-          echo "WORKSPACE=$WORKSPACE"
-          hostname
-          pwd
-          ls -la
+          mkdir -p ~/CampusKart
+          rsync -av --delete ./ ~/CampusKart/
         '''
       }
     }
