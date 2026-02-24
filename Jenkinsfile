@@ -32,7 +32,6 @@ pipeline {
       }
     }
 	
-	catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
 	stage('Smoke (testRigor)') {
   when { branch 'develop' }   // change to your dev branch name
   steps {
@@ -51,5 +50,4 @@ pipeline {
   }
 }
   }
-}
 }
