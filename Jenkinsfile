@@ -13,7 +13,7 @@ pipeline {
         checkout scm
       }
     }
-//test comment.
+//test comment
     stage('Build Frontend') {
       steps {
         dir('Frontend') {
