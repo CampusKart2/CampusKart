@@ -4,7 +4,9 @@ pipeline {
   options {
     skipDefaultCheckout(true)
   }
-
+  triggers {
+    githubPush()
+  }
   stages {
     stage('Checkout') {
       steps {
@@ -38,7 +40,7 @@ pipeline {
       sh '''
         curl -X POST \
   -H 'Content-type: application/json' \
-  -H 'auth-token: 87effdd8-8baa-46bb-bf0e-d43b9ce20253' \
+  -H 'auth-token: TESTRIGOR_TOKEN' \
   --data '{ "storedValues": { "storedValueName1": "Value" }, "customName": "optionalNameForRun" }' \
   https://api.testrigor.com/api/v1/apps/zikCmbLzeWkEez2bz/retest
       '''
