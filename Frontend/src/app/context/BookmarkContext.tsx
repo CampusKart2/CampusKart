@@ -36,7 +36,6 @@ export function BookmarkProvider({ children }: { children: React.ReactNode }) {
     setBookmarkedIds((prev) =>
       prev.includes(id) ? prev.filter((b) => b !== id) : [...prev, id]
     );
-    console.log('Bookmark toggled for ID:', id);
   }, []);
 
   const isBookmarked = useCallback(

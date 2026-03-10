@@ -59,7 +59,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         };
       })
     );
-    console.log('Chat: conversation marked read', conversationId);
   }, []);
 
   const addMessage = useCallback((conversationId: string, text: string) => {
@@ -89,8 +88,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       });
       return updated;
     });
-
-    console.log('Chat: message sent', conversationId, text);
   }, []);
 
   const addSellerReply = useCallback((conversationId: string, text: string, sellerId: string, sellerName: string) => {
@@ -118,7 +115,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         };
       })
     );
-    console.log('Chat: auto-reply sent', conversationId, text);
   }, []);
 
   const createConversation = useCallback(
@@ -164,7 +160,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       };
 
       setConversations((prev) => [...prev, newConv]);
-      console.log('Chat: new conversation created', id, listingTitle);
       return id;
     },
     [conversations]

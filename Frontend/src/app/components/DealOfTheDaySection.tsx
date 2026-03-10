@@ -6,7 +6,6 @@ export function DealOfTheDaySection() {
   const deal = getDealOfTheDay();
 
   const handleViewDeal = (): void => {
-    console.log('Deal of the Day clicked:', deal.id);
     window.location.hash = `#listing/${deal.id}`;
   };
 

@@ -13,7 +13,6 @@ export function ContactPage() {
     }
     toast.success('Report received. We will get back to you shortly.');
     setReportText('');
-    console.log('Report submitted:', reportText);
   };
 
   const handleBack = () => {

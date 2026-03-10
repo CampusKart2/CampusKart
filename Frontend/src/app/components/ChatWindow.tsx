@@ -31,7 +31,6 @@ export function ChatWindow({ conversation, onBack, isMobile }: ChatWindowProps) 
 
   useEffect(() => {
     markConversationRead(conversation.id);
-    console.log('Chat: conversation opened', conversation.id);
   }, [conversation.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);

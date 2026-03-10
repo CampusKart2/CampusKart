@@ -10,13 +10,10 @@ type ConversationListProps = {
 };
 
 function getInitials(name: string): string {
-  return name
-    .split(/[\s.]+/)
-    .filter(Boolean)
-    .map((p) => p[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
+  const parts = name.split(/[\s.]+/).filter(Boolean);
+  const first = parts[0]?.[0] ?? '';
+  const second = parts[1]?.[0] ?? '';
+  return (first + second).toUpperCase();
 }
 
 export function ConversationList({ conversations, activeId, onSelect }: ConversationListProps) {

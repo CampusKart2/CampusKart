@@ -3,7 +3,6 @@ import { Leaf } from 'lucide-react';
 
 export function SustainabilityBanner() {
   const handleExploreClick = (): void => {
-    console.log('Explore listings clicked');
     document.querySelector('#featured')?.scrollIntoView({ behavior: 'smooth' });
   };
 

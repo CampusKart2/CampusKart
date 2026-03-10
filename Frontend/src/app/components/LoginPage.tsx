@@ -8,18 +8,15 @@ export function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
 
   const handleBackToHome = (): void => {
-    console.log('Back to home clicked');
     window.location.hash = '';
   };
 
   const handleLogin = (e: React.FormEvent): void => {
     e.preventDefault();
-    console.log('Login submit (disabled)');
     toast.info('Login functionality coming in Sprint 1');
   };
 
   const handleSignupLink = (): void => {
-    console.log('Sign up link clicked');
     window.location.hash = '#signup';
   };
 

@@ -28,12 +28,10 @@ const universities = [
 
 export function CampusVerificationPage() {
   const handleBackToHome = (): void => {
-    console.log('Back to home clicked');
     window.location.hash = '';
   };
 
   const handleGetStarted = (): void => {
-    console.log('Get Started clicked');
     window.location.hash = '#signup';
   };
 

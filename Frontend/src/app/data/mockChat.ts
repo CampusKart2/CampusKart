@@ -192,9 +192,8 @@ export function loadConversationsFromStorage(): Conversation[] {
 export function saveConversationsToStorage(conversations: Conversation[]): void {
   try {
     localStorage.setItem(STORAGE_KEY, serializeConversations(conversations));
-    console.log('Chat: localStorage updated, conversations count:', conversations.length);
-  } catch (e) {
-    console.warn('Chat: failed to save to localStorage', e);
+  } catch {
+    // localStorage may be unavailable
   }
 }
 

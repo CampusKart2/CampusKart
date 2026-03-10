@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { ArrowLeft, Upload } from 'lucide-react';
-
-const CATEGORIES = ['Textbooks', 'Furniture', 'Electronics', 'Clothing', 'Dorm Essentials'];
-const CONDITIONS = ['New', 'Like New', 'Good', 'Fair'];
+import { CATEGORIES, CONDITIONS } from '../data/constants';
 
 export function CreateListingPage() {
   const [title, setTitle] = useState('');
@@ -14,21 +12,12 @@ export function CreateListingPage() {
   const [location, setLocation] = useState('');
 
   const handleBackToHome = (): void => {
-    console.log('Back to home clicked');
     window.location.hash = '';
   };
 
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
-    console.log('Create listing submit (disabled)');
     toast.info('Submit listing coming in Sprint 1');
-  };
-
-  const handleFieldBlur = (field: string, value: string): void => {
-    if (value.trim()) {
-      console.log(`Field filled: ${field}`);
-      toast.info(`"${field}" filled`);
-    }
   };
 
   const inputClass = 'w-full h-12 pl-4 pr-4 bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[#111827] placeholder:text-[#6B7280] focus:outline-none focus:ring-2 focus:ring-[#3B82F6] focus:border-transparent focus:shadow-md transition-all duration-300';
@@ -55,7 +44,6 @@ export function CreateListingPage() {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              onBlur={() => handleFieldBlur('Item Title', title)}
               placeholder="e.g. Calculus Textbook 8th Ed"
               className={inputClass}
             />
@@ -70,7 +58,6 @@ export function CreateListingPage() {
               step="0.01"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
-              onBlur={() => handleFieldBlur('Price', price)}
               placeholder="0.00"
               className={inputClass}
             />
@@ -82,7 +69,6 @@ export function CreateListingPage() {
               id="category"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              onBlur={() => handleFieldBlur('Category', category)}
               className={inputClass}
             >
               <option value="">Select category</option>
@@ -98,7 +84,6 @@ export function CreateListingPage() {
               id="condition"
               value={condition}
               onChange={(e) => setCondition(e.target.value)}
-              onBlur={() => handleFieldBlur('Condition', condition)}
               className={inputClass}
             >
               <option value="">Select condition</option>
@@ -115,7 +100,6 @@ export function CreateListingPage() {
               rows={4}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              onBlur={() => handleFieldBlur('Description', description)}
               placeholder="Describe your item..."
               className={`${inputClass} h-32 resize-none pt-3`}
             />
@@ -128,7 +112,6 @@ export function CreateListingPage() {
               type="text"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              onBlur={() => handleFieldBlur('Location', location)}
               placeholder="e.g. North Campus Dorms"
               className={inputClass}
             />

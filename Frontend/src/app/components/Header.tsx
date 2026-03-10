@@ -45,7 +45,6 @@ export function Header() {
 
   const handleSearch = (e: React.FormEvent): void => {
     e.preventDefault();
-    console.log('Header search:', searchQuery);
     if (searchQuery.trim()) {
       try {
         sessionStorage.setItem('campuskart_search_query', searchQuery.trim());
@@ -56,12 +55,10 @@ export function Header() {
   };
 
   const handleLogin = (): void => {
-    console.log('Login clicked');
     window.location.hash = '#login';
   };
 
   const handleSignup = (): void => {
-    console.log('Signup clicked');
     window.location.hash = '#signup';
   };
 

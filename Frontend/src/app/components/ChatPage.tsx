@@ -44,7 +44,6 @@ export function ChatPage({ conversationId, isNewWithListingId }: ChatPageProps) 
         `Hi! Is ${listing.title} still available?`
       );
       window.location.hash = `#chat/${newId}`;
-      console.log('Chat: new conversation created from listing', isNewWithListingId);
     }
   }, [isNewWithListingId, findConversationByListingId, createConversation]);
 
@@ -63,7 +62,6 @@ export function ChatPage({ conversationId, isNewWithListingId }: ChatPageProps) 
     setActiveConversation(conv);
     window.location.hash = `#chat/${conv.id}`;
     if (window.innerWidth < 768) setIsMobileChatOpen(true);
-    console.log('Chat: conversation selected', conv.id);
   };
 
   const handleBackToList = () => {

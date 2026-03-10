@@ -4,13 +4,11 @@ import { ImageWithFallback } from './figma/ImageWithFallback';
 
 export function Hero() {
   const handleStartBrowsing = (): void => {
-    console.log('Start browsing clicked');
     window.location.hash = '#browse';
     document.querySelector('#categories')?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const handleListItem = (): void => {
-    console.log('List item clicked');
     window.location.hash = '#create-listing';
   };
 

@@ -11,7 +11,6 @@ const categories = [
 
 export function Categories() {
   const handleCategoryClick = (categoryName: string): void => {
-    console.log(`Category clicked: ${categoryName}`);
     window.location.hash = `#category/${encodeURIComponent(categoryName)}`;
   };
 

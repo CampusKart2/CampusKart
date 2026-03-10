@@ -14,7 +14,7 @@ import { ImageWithFallback } from './figma/ImageWithFallback';
 import {
   getListingById,
   addRecentlyViewed,
-  MOCK_LISTINGS,
+  getSimilarListings,
   type Listing,
 } from '../data/mockListings';
 import { useBookmarks } from '../context/BookmarkContext';
@@ -50,12 +50,10 @@ export function ListingDetailPage({ listingId }: ListingDetailPageProps) {
   useEffect(() => {
     if (listing) {
       addRecentlyViewed(listing.id);
-      console.log('Recently viewed updated:', listing.id);
     }
   }, [listing?.id]);
 
   const handleBackToBrowse = (): void => {
-    console.log('Back to browse clicked');
     window.location.hash = '#browse';
   };
 
@@ -68,7 +66,6 @@ export function ListingDetailPage({ listingId }: ListingDetailPageProps) {
 
   const handleContactSeller = (): void => {
     if (!listing) return;
-    console.log('Contact seller clicked for listing', listing.id);
     const existing = findConversationByListingId(listing.id);
     if (existing) {
       window.location.hash = `#chat/${existing.id}`;
@@ -82,7 +79,6 @@ export function ListingDetailPage({ listingId }: ListingDetailPageProps) {
       const url = window.location.href;
       await navigator.clipboard.writeText(url);
       toast.success('Link copied to clipboard!');
-      console.log('Share: link copied', url);
     } catch {
       toast.error('Could not copy link');
     }
@@ -90,11 +86,9 @@ export function ListingDetailPage({ listingId }: ListingDetailPageProps) {
 
   const handleWriteReview = (): void => {
     toast.info('Review feature coming soon!');
-    console.log('Write review clicked');
   };
 
   const handleSimilarClick = (item: Listing): void => {
-    console.log('Similar item clicked:', item.id);
     window.location.hash = `#listing/${item.id}`;
   };
 
@@ -125,17 +119,7 @@ export function ListingDetailPage({ listingId }: ListingDetailPageProps) {
     );
   }
 
-  const similarItems = (() => {
-    const delta = listing.price * 0.3;
-    const sameCategory = MOCK_LISTINGS.filter(
-      (l) => l.id !== listing.id && l.category === listing.category
-    );
-    const withinPrice = sameCategory.filter(
-      (l) => Math.abs(l.price - listing.price) <= delta
-    );
-    if (withinPrice.length >= 4) return withinPrice.slice(0, 4);
-    return [...withinPrice, ...sameCategory.filter((l) => !withinPrice.includes(l))].slice(0, 4);
-  })();
+  const similarItems = getSimilarListings(listing);
   const reviews = listing.reviews ?? [];
   const avgRating = reviews.length
     ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
@@ -241,15 +225,11 @@ export function ListingDetailPage({ listingId }: ListingDetailPageProps) {
               <h2 className="text-xl font-semibold text-[#111827] dark:text-white">
                 Price Trend (Last 30 Days)
               </h2>
-              {(() => {
-                const minPrice = Math.min(...listing.priceHistory.map((p) => p.price));
-                const isLowest = listing.price <= minPrice;
-                return isLowest ? (
-                  <span className="px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-medium dark:bg-green-900/30 dark:text-green-400">
-                    Lowest: ${minPrice}
-                  </span>
-                ) : null;
-              })()}
+              {listing.price <= Math.min(...listing.priceHistory.map((p) => p.price)) && (
+                <span className="px-3 py-1 rounded-full bg-green-100 text-green-800 text-sm font-medium dark:bg-green-900/30 dark:text-green-400">
+                  Lowest: ${Math.min(...listing.priceHistory.map((p) => p.price))}
+                </span>
+              )}
             </div>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">

@@ -10,18 +10,15 @@ export function SignupPage() {
   const [agreeTerms, setAgreeTerms] = useState(false);
 
   const handleBackToHome = (): void => {
-    console.log('Back to home clicked');
     window.location.hash = '';
   };
 
   const handleSignup = (e: React.FormEvent): void => {
     e.preventDefault();
-    console.log('Signup submit (disabled)');
     toast.info('Signup functionality coming in Sprint 1');
   };
 
   const handleLoginLink = (): void => {
-    console.log('Log in link clicked');
     window.location.hash = '#login';
   };
 

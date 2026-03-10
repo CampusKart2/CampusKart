@@ -16,7 +16,6 @@ const faqs = [
 
 export function HowItWorksPage() {
   const handleBackToHome = (): void => {
-    console.log('Back to home clicked');
     window.location.hash = '';
   };
 
