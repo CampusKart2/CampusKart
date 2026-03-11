@@ -50,7 +50,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   return (
     <div className="flex h-[calc(100vh-56px)]">
       {/* ── Left sidebar — desktop only ── */}
-      <div className="hidden md:block h-full overflow-y-auto flex-shrink-0 border-r border-border">
+      <div className="hidden md:block h-full overflow-y-auto flex-shrink-0">
         <Suspense fallback={null}>
           <CategorySidebarClientWrapper activeCategory={activeCategory} />
         </Suspense>
