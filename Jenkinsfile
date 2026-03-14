@@ -59,7 +59,8 @@ pipeline {
     }
   }
 }
-post {
+  }
+  post {
     always {
       node('qa') {
         script {
@@ -67,6 +68,5 @@ post {
         }
       }
     }
-  }
   }
 }
