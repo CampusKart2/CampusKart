@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { verifySession, signSession } from "@/lib/session";
+
+const COOKIE_NAME = "campuskart_session";
+const COOKIE_TTL = 60 * 60 * 24 * 7; // 7 days in seconds
 
 // ─── Validation ────────────────────────────────────────────────────────────────
 
@@ -79,29 +84,59 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // 5. Mark user as verified + delete the consumed token — atomic transaction
-  await db.query("BEGIN");
+  // 5. Mark user as verified + delete the consumed token — atomic transaction.
+  // Must use a single client connection so BEGIN/UPDATE/DELETE/COMMIT all
+  // land on the same backend connection (Pool.query() can round-robin).
+  const client = await db.connect();
   try {
-    await db.query(
+    await client.query("BEGIN");
+    await client.query(
       `UPDATE users SET email_verified = TRUE WHERE id = $1`,
       [row.user_id]
     );
-    await db.query(
+    await client.query(
       `DELETE FROM email_verification_tokens WHERE token = $1`,
       [token]
     );
-    await db.query("COMMIT");
+    await client.query("COMMIT");
   } catch (err) {
-    await db.query("ROLLBACK");
+    await client.query("ROLLBACK");
+    client.release();
     console.error("[verify-email/confirm] DB error:", err);
     return NextResponse.json(
       { error: "Verification failed. Please try again." },
       { status: 500 }
     );
   }
+  client.release();
 
-  return NextResponse.json(
+  const response = NextResponse.json(
     { message: "Email verified successfully. You can now log in." },
     { status: 200 }
   );
+
+  // 6. If the user clicked the link in the same browser session, their JWT
+  //    still carries emailVerified=false.  Re-issue the cookie right now so
+  //    they aren't blocked by the middleware gate on their very next request.
+  try {
+    const cookieStore = await cookies();
+    const rawSession = cookieStore.get(COOKIE_NAME)?.value;
+    if (rawSession) {
+      const existingSession = await verifySession(rawSession);
+      if (existingSession && existingSession.userId === row.user_id) {
+        const newToken = await signSession({ ...existingSession, emailVerified: true });
+        response.cookies.set(COOKIE_NAME, newToken, {
+          httpOnly: true,
+          secure:   process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge:   COOKIE_TTL,
+          path:     "/",
+        });
+      }
+    }
+  } catch {
+    // Non-fatal: user can re-login to get an updated token
+  }
+
+  return response;
 }

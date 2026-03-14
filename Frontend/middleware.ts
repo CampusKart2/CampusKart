@@ -82,10 +82,14 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   let refreshedToken: string | null = null;
   if (session && rawToken) {
     try {
-      // Decode exp without full verify (we already verified above)
+      // Decode exp without full verify (we already verified above).
+      // Convert base64url → base64 and add "=" padding so atob() doesn't throw
+      // on payloads whose length isn't a multiple of 4 (common for JWTs).
       const parts = rawToken.split(".");
       if (parts.length === 3) {
-        const claims = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/"))) as { exp?: number };
+        const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+        const padded = b64 + "=".repeat((4 - (b64.length % 4)) % 4);
+        const claims = JSON.parse(atob(padded)) as { exp?: number };
         const secondsRemaining = (claims.exp ?? 0) - Math.floor(Date.now() / 1000);
         if (secondsRemaining > 0 && secondsRemaining < REFRESH_THRESHOLD_SECONDS) {
           refreshedToken = await signSession(session);
