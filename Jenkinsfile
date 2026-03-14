@@ -47,19 +47,21 @@ pipeline {
     }
 	
 	stage('Smoke (testRigor)') {
-  steps {
-    withCredentials([string(credentialsId: 'TESTRIGOR_TOKEN', variable: 'TR_TOKEN')]) {
-      sh '''
-        curl -X POST \
-  -H 'Content-type: application/json' \
-  -H 'auth-token: TESTRIGOR_TOKEN' \
-  --data '{ "storedValues": { "storedValueName1": "Value" }, "customName": "optionalNameForRun" }' \
-  https://api.testrigor.com/api/v1/apps/zikCmbLzeWkEez2bz/retest
-      '''
+      steps {
+        withCredentials([string(credentialsId: 'TESTRIGOR_TOKEN', variable: 'TR_TOKEN')]) {
+          sh '''
+            curl -X POST \
+              -H 'Content-type: application/json' \
+              -H "auth-token: ${TR_TOKEN}" \
+              --data '{ "storedValues": { "storedValueName1": "Value" }, "customName": "optionalNameForRun" }' \
+              https://api.testrigor.com/api/v1/apps/zikCmbLzeWkEez2bz/retest
+          '''
+        }
+      }
     }
-  }
-}
-  }
+
+  } // end stages
+
   post {
     always {
       node('qa') {
@@ -69,4 +71,5 @@ pipeline {
       }
     }
   }
+
 }
