@@ -60,10 +60,10 @@ pipeline {
       }
     }
 
-  } // end stages
+  }
   post {
     always {
-      node('qa') {
+      node('dev') {
         script {
           notifySlack(currentBuild.currentResult, '#jenkins')
         }
