@@ -63,12 +63,10 @@ pipeline {
   }
   post {
     always {
-      node('dev') {
         script {
           notifySlack(currentBuild.currentResult, '#jenkins')
         }
       }
-    }
   }
 
 }
