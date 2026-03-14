@@ -39,7 +39,8 @@ export async function loginAction(
   const from = (formData.get("from") as string) || "/";
 
   const parsed = loginSchema.safeParse({
-    email: (formData.get("email") as string ?? "").trim(),
+    // Normalize to lowercase so "User@Pace.EDU" matches the stored "user@pace.edu"
+    email: (formData.get("email") as string ?? "").trim().toLowerCase(),
     password: formData.get("password") as string ?? "",
   });
 
@@ -80,7 +81,9 @@ export async function signupAction(
 
   const parsed = signupSchema.safeParse({
     name: (formData.get("name") as string ?? "").trim(),
-    email: (formData.get("email") as string ?? "").trim(),
+    // Normalize to lowercase so duplicate-email check and DB unique constraint
+    // are case-insensitive ("User@Pace.EDU" and "user@pace.edu" are the same account)
+    email: (formData.get("email") as string ?? "").trim().toLowerCase(),
     password: formData.get("password") as string ?? "",
   });
 

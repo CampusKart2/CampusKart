@@ -3,7 +3,6 @@ import NavbarSearchBar from "./NavbarSearchBar";
 import MobileMenu from "./MobileMenu";
 import { getSession } from "@/lib/auth";
 import { logoutAction } from "@/app/(auth)/actions";
-import type { SessionPayload } from "@/lib/session";
 
 export default async function Navbar() {
   // getSession() now returns SessionPayload | null
@@ -87,7 +86,7 @@ export default async function Navbar() {
         {/* Mobile: hamburger (shown below md) */}
         <div className="flex md:hidden ml-auto">
           {/* Pass the full session so MobileMenu can show user context + logout */}
-          <MobileMenu session={session as SessionPayload | null} />
+          <MobileMenu session={session} />
         </div>
       </div>
 

@@ -1,27 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { verifySession } from "@/lib/session";
 
 const COOKIE_NAME = "campuskart_session";
 
 // ─── Shared logout helper ──────────────────────────────────────────────────────
 //
-// Clears the session cookie by overwriting it with an empty value and maxAge=0,
-// which instructs the browser to delete it immediately.  Any token stored only
-// in the cookie is thereby invalidated — subsequent requests will carry no
-// bearer credential and middleware will return 401.
-async function clearSession(): Promise<NextResponse> {
-  const store = await cookies();
-
-  store.set(COOKIE_NAME, "", {
+// Sets the clearing Set-Cookie header directly on the response object so we
+// don't rely on the implicit Next.js cookies() write-back, which is only
+// guaranteed to merge into a response when no other NextResponse is created
+// after the set() call.
+function clearSession(body: object, status: number): NextResponse {
+  const res = NextResponse.json(body, { status });
+  res.cookies.set(COOKIE_NAME, "", {
     httpOnly: true,
     secure:   process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge:   0,
+    maxAge:   0, // instructs the browser to delete the cookie immediately
     path:     "/",
   });
-
-  return NextResponse.json({ message: "Logged out." }, { status: 200 });
+  return res;
 }
 
 // ─── DELETE /api/auth/logout ───────────────────────────────────────────────────
@@ -39,12 +36,8 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: "Not authenticated." }, { status: 401 });
   }
 
-  const res = await clearSession();
-  // T-15: tell REST/SPA consumers where to navigate after clearing the cookie.
-  return NextResponse.json(
-    { message: "Logged out.", redirectUrl: "/login" },
-    { status: 200, headers: res.headers }
-  );
+  // T-15: redirectUrl tells REST/SPA consumers where to navigate post-logout.
+  return clearSession({ message: "Logged out.", redirectUrl: "/login" }, 200);
 }
 
 // ─── POST /api/auth/logout ─────────────────────────────────────────────────────
@@ -57,5 +50,5 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
 //   200  { message: "Logged out." }
 
 export async function POST(_req: NextRequest): Promise<NextResponse> {
-  return clearSession();
+  return clearSession({ message: "Logged out." }, 200);
 }

@@ -12,7 +12,6 @@ interface MobileMenuProps {
 
 export default function MobileMenu({ session }: MobileMenuProps) {
   const [open, setOpen] = useState(false);
-  const isLoggedIn = session !== null;
 
   return (
     <div className="relative">
@@ -27,7 +26,10 @@ export default function MobileMenu({ session }: MobileMenuProps) {
 
       {open && (
         <div className="absolute right-0 top-full mt-1 w-52 bg-card border border-border rounded-card shadow-card-hover flex flex-col py-2 z-50">
-          {isLoggedIn ? (
+          {/* Use `session !== null` directly so TypeScript narrows the type
+              inside each branch — a derived `isLoggedIn: boolean` variable
+              breaks the correlation and makes session.email a type error. */}
+          {session !== null ? (
             <>
               {/* User context — shows masked email so user knows who is logged in */}
               {session.email && (
