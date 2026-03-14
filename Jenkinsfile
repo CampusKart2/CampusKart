@@ -61,7 +61,6 @@ pipeline {
     }
 
   } // end stages
-
   post {
     always {
       node('qa') {
