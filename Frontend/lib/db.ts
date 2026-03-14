@@ -30,5 +30,13 @@ function createPool(): Pool {
   });
 }
 
-export const db: Pool =
-  globalThis._pgPool ?? (globalThis._pgPool = createPool());
+// Lazy proxy — pool is created on first use, not at module load time.
+// This prevents build-time failures when DATABASE_URL is not set.
+export const db: Pool = new Proxy({} as Pool, {
+  get(_target, prop: string | symbol) {
+    const pool =
+      globalThis._pgPool ?? (globalThis._pgPool = createPool());
+    const value = (pool as any)[prop as string];
+    return typeof value === "function" ? value.bind(pool) : value;
+  },
+});
