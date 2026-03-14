@@ -1,3 +1,5 @@
+@Library('my-shared-lib') _
+
 pipeline {
   agent { label 'dev-agent' }
 
@@ -8,9 +10,19 @@ pipeline {
     githubPush()
   }
   stages {
+  
     stage('Checkout') {
       steps {
         checkout scm
+      }
+    }
+	
+	stage('Notify Start') {
+      agent any
+      steps {
+        script {
+          notifySlack('STARTED', '#jenkins')
+        }
       }
     }
 //test comment
@@ -47,5 +59,14 @@ pipeline {
     }
   }
 }
+post {
+    always {
+      node('qa') {
+        script {
+          notifySlack(currentBuild.currentResult, '#jenkins')
+        }
+      }
+    }
+  }
   }
 }
