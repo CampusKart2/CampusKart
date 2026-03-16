@@ -38,7 +38,7 @@ export const listingsQuerySchema = z
       (v) =>
         v === "" || v === null || v === undefined ? undefined : Number(v),
       z
-        .number({ invalid_type_error: "price_min must be a number." })
+        .number({ message: "price_min must be a number." })
         .min(0, "price_min must be at least 0.")
         .optional()
     ),
@@ -46,7 +46,7 @@ export const listingsQuerySchema = z
       (v) =>
         v === "" || v === null || v === undefined ? undefined : Number(v),
       z
-        .number({ invalid_type_error: "price_max must be a number." })
+        .number({ message: "price_max must be a number." })
         .min(0, "price_max must be at least 0.")
         .optional()
     ),
