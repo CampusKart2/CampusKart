@@ -54,10 +54,7 @@ export const listingsQuerySchema = z
       (v) => (v === "" || v === null || v === undefined ? undefined : v),
       z
         .enum(LISTING_CONDITIONS, {
-          errorMap: () => ({
-            message:
-              "condition must be one of: New, Like New, Good, Fair, Poor.",
-          }),
+          error: "condition must be one of: New, Like New, Good, Fair, Poor.",
         })
         .optional()
     ),
