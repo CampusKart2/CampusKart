@@ -41,32 +41,36 @@ pipeline {
       steps {
         sh '''
           mkdir -p ~/CampusKart
-          rsync -av --delete ./ ~/CampusKart/
+    rsync -av --delete \
+      --exclude='.env' \
+      --exclude='.env.local' \
+      --exclude='.env.production' \
+      ./ ~/CampusKart/
         '''
       }
     }
 	
 	stage('Smoke (testRigor)') {
-      steps {
-        withCredentials([string(credentialsId: 'TESTRIGOR_TOKEN', variable: 'TR_TOKEN')]) {
-          sh '''
-            curl -X POST \
-              -H 'Content-type: application/json' \
-              -H "auth-token: ${TR_TOKEN}" \
-              --data '{ "storedValues": { "storedValueName1": "Value" }, "customName": "optionalNameForRun" }' \
-              https://api.testrigor.com/api/v1/apps/zikCmbLzeWkEez2bz/retest
-          '''
-        }
-      }
+  steps {
+    withCredentials([string(credentialsId: 'TESTRIGOR_TOKEN', variable: 'TR_TOKEN')]) {
+      sh '''
+        curl -X POST \
+  -H 'Content-type: application/json' \
+  -H 'auth-token: TESTRIGOR_TOKEN' \
+  --data '{ "storedValues": { "storedValueName1": "Value" }, "customName": "optionalNameForRun" }' \
+  https://api.testrigor.com/api/v1/apps/zikCmbLzeWkEez2bz/retest
+      '''
     }
-
   }
-  post {
+}
+post {
     always {
+      node('qa') {
         script {
           notifySlack(currentBuild.currentResult, '#jenkins')
         }
       }
+    }
   }
-
+  }
 }
