@@ -5,11 +5,11 @@ import {
 import { ListingsBrowseView } from "@/components/listings/ListingsBrowseView";
 
 /**
- * Search page at /search. Shares the same browse view and URL semantics as
- * /listings; category clicks across the app use /listings?category=X for
- * filtered results.
+ * Listings browse page at /listings. URL query params (e.g. ?category=X) are the
+ * source of truth; category clicks across the app navigate here so the URL is
+ * /listings?category=X and results are scoped correctly.
  */
-interface SearchPageProps {
+interface ListingsPageProps {
   searchParams: Promise<{
     q?: string;
     category?: string;
@@ -19,7 +19,7 @@ interface SearchPageProps {
   }>;
 }
 
-export default async function SearchPage({ searchParams }: SearchPageProps) {
+export default async function ListingsPage({ searchParams }: ListingsPageProps) {
   const raw = await searchParams;
   const params = parseListingsSearchParams(raw);
   const listings = await fetchListingsForBrowse(params);
@@ -36,4 +36,3 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     />
   );
 }
-

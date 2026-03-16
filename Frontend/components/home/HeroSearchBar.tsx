@@ -11,7 +11,7 @@ export default function HeroSearchBar() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const q = value.trim();
-    router.push(q ? `/search?q=${encodeURIComponent(q)}` : "/search");
+    router.push(q ? `/listings?q=${encodeURIComponent(q)}` : "/listings");
   };
 
   return (

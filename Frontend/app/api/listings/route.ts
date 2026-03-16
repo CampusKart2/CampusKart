@@ -49,6 +49,20 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const { q, category, price_min, price_max, condition, page, limit } =
     parsed.data;
 
+  // When a category filter is present, ensure it exists; unknown slug → 404.
+  if (category) {
+    const { rows: categoryRows } = await db.query<{ slug: string }>(
+      "SELECT slug FROM categories WHERE slug = $1 LIMIT 1",
+      [category]
+    );
+    if (categoryRows.length === 0) {
+      return NextResponse.json(
+        { error: "Category not found." },
+        { status: 404 }
+      );
+    }
+  }
+
   const filters: string[] = [];
   const params: (string | number)[] = [];
 

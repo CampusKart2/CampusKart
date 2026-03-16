@@ -80,7 +80,7 @@ export default async function HomePage() {
           <HeroSearchBar />
           <div className="flex items-center gap-3 flex-wrap justify-center">
             <Link
-              href="/search"
+              href="/listings"
               className="px-5 py-2.5 text-sm font-semibold text-white bg-primary rounded-button hover:bg-primary-dark transition"
             >
               Browse listings
@@ -97,14 +97,22 @@ export default async function HomePage() {
 
       {/* ── Categories ── */}
       <section className="max-w-screen-xl mx-auto px-4 py-10">
-        <h2 className="text-xl font-bold text-text-primary mb-5">
-          Browse by category
-        </h2>
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-xl font-bold text-text-primary">
+            Browse by category
+          </h2>
+          <Link
+            href="/categories"
+            className="text-sm font-semibold text-primary hover:underline"
+          >
+            View all
+          </Link>
+        </div>
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
           {CATEGORIES.map(({ label, slug, Icon, bg, fg }) => (
             <Link
               key={label}
-              href={slug ? `/search?category=${slug}` : "/search"}
+              href={slug ? `/listings?category=${slug}` : "/listings"}
               className="flex flex-col items-center gap-2.5 p-4 bg-card rounded-card shadow-card hover:shadow-card-hover hover:scale-[1.02] transition-all text-center"
             >
               <span
@@ -128,7 +136,7 @@ export default async function HomePage() {
               Recent listings
             </h2>
             <Link
-              href="/search"
+              href="/listings"
               className="flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
             >
               View all <ArrowRight size={14} aria-hidden="true" />
