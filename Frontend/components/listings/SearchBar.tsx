@@ -3,26 +3,26 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, X } from "lucide-react";
+import { applySearchParams, SEARCH_PARAM_KEYS } from "@/lib/search-params";
 
+/**
+ * Search input synced to URL ?q=. Preserves other params (filters) so links stay sharable;
+ * router.push adds history entries so back button restores previous query.
+ */
 export default function SearchBar() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [value, setValue] = useState(() => searchParams.get("q") ?? "");
+  const [value, setValue] = useState(() => searchParams.get(SEARCH_PARAM_KEYS.q) ?? "");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Sync input if the URL ?q= changes externally (e.g. browser back/forward)
+  // Sync input when URL changes (e.g. browser back/forward or shared link).
   useEffect(() => {
-    setValue(searchParams.get("q") ?? "");
+    setValue(searchParams.get(SEARCH_PARAM_KEYS.q) ?? "");
   }, [searchParams]);
 
   const pushQuery = useCallback(
     (q: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (q) {
-        params.set("q", q);
-      } else {
-        params.delete("q");
-      }
+      const params = applySearchParams(searchParams, { q: q || null });
       router.push(`?${params.toString()}`, { scroll: false });
     },
     [router, searchParams],

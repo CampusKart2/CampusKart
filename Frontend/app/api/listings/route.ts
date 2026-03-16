@@ -24,6 +24,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const raw = {
     q: (searchParams.get("q") ?? "").trim(),
     category: (searchParams.get("category") ?? "").trim(),
+    price_min: searchParams.get("price_min") ?? "",
+    price_max: searchParams.get("price_max") ?? "",
+    condition: (searchParams.get("condition") ?? "").trim(),
     page: Number.parseInt(searchParams.get("page") ?? "1", 10),
     limit: Number.parseInt(searchParams.get("limit") ?? "20", 10),
   };
@@ -43,7 +46,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const { q, category, page, limit } = parsed.data;
+  const { q, category, price_min, price_max, condition, page, limit } =
+    parsed.data;
 
   const filters: string[] = [];
   const params: (string | number)[] = [];
@@ -53,13 +57,33 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     params.push(q);
     const tsQueryParamIndex = params.length;
     // Use plainto_tsquery for simple user-entered search terms.
-    filters.push(`search_vector @@ plainto_tsquery('english', $${tsQueryParamIndex})`);
+    filters.push(
+      `search_vector @@ plainto_tsquery('english', $${tsQueryParamIndex})`
+    );
   }
 
   if (category) {
     params.push(category);
     const categoryParamIndex = params.length;
     filters.push(`LOWER(category) = $${categoryParamIndex}`);
+  }
+
+  // Price range: API uses dollars; DB stores price_cents.
+  if (price_min != null) {
+    params.push(Math.round(price_min * 100));
+    const priceMinIndex = params.length;
+    filters.push(`price_cents >= $${priceMinIndex}`);
+  }
+  if (price_max != null) {
+    params.push(Math.round(price_max * 100));
+    const priceMaxIndex = params.length;
+    filters.push(`price_cents <= $${priceMaxIndex}`);
+  }
+
+  if (condition) {
+    params.push(condition);
+    const conditionParamIndex = params.length;
+    filters.push(`condition = $${conditionParamIndex}`);
   }
 
   const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
