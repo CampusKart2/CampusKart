@@ -1,164 +1,136 @@
 import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
 import type { Listing } from "@/lib/types/listing";
+import { listingsQuerySchema } from "@/lib/validators/listings";
 
-const MOCK_LISTINGS: Listing[] = [
-  {
-    id: "1",
-    title: "Calculus: Early Transcendentals 8th Edition",
-    price: 35,
-    condition: "Good",
-    category: "books",
-    thumbnail_url: null,
-    seller_id: "u1",
-    created_at: "2026-03-01T10:00:00Z",
-    view_count: 42,
-  },
-  {
-    id: "2",
-    title: "MacBook Pro 14-inch 2023 (M2 Pro)",
-    price: 1100,
-    condition: "Like New",
-    category: "electronics",
-    thumbnail_url: null,
-    seller_id: "u2",
-    created_at: "2026-03-02T14:00:00Z",
-    view_count: 120,
-  },
-  {
-    id: "3",
-    title: "IKEA MALM Desk — White",
-    price: 60,
-    condition: "Good",
-    category: "furniture",
-    thumbnail_url: null,
-    seller_id: "u3",
-    created_at: "2026-03-03T09:00:00Z",
-    view_count: 18,
-  },
-  {
-    id: "4",
-    title: "Patagonia Better Sweater Fleece (M)",
-    price: 45,
-    condition: "Like New",
-    category: "clothing",
-    thumbnail_url: null,
-    seller_id: "u4",
-    created_at: "2026-03-04T11:00:00Z",
-    view_count: 9,
-  },
-  {
-    id: "5",
-    title: "Organic Chemistry 2nd Ed. — Klein",
-    price: 25,
-    condition: "Fair",
-    category: "books",
-    thumbnail_url: null,
-    seller_id: "u5",
-    created_at: "2026-03-05T08:00:00Z",
-    view_count: 33,
-  },
-  {
-    id: "6",
-    title: "Sony WH-1000XM5 Headphones",
-    price: 180,
-    condition: "Good",
-    category: "electronics",
-    thumbnail_url: null,
-    seller_id: "u6",
-    created_at: "2026-03-05T15:00:00Z",
-    view_count: 87,
-  },
-  {
-    id: "7",
-    title: "Mini Fridge — 3.2 cu ft",
-    price: 50,
-    condition: "Good",
-    category: "furniture",
-    thumbnail_url: null,
-    seller_id: "u7",
-    created_at: "2026-03-06T10:30:00Z",
-    view_count: 25,
-  },
-  {
-    id: "8",
-    title: "Nike Dri-FIT Running Shorts (L)",
-    price: 0,
-    condition: "Good",
-    category: "clothing",
-    thumbnail_url: null,
-    seller_id: "u8",
-    created_at: "2026-03-06T13:00:00Z",
-    view_count: 5,
-  },
-  {
-    id: "9",
-    title: "TI-84 Plus CE Graphing Calculator",
-    price: 70,
-    condition: "Like New",
-    category: "electronics",
-    thumbnail_url: null,
-    seller_id: "u9",
-    created_at: "2026-03-07T09:00:00Z",
-    view_count: 60,
-  },
-  {
-    id: "10",
-    title: "Introduction to Algorithms (CLRS) 4th Ed.",
-    price: 40,
-    condition: "New",
-    category: "books",
-    thumbnail_url: null,
-    seller_id: "u10",
-    created_at: "2026-03-07T11:00:00Z",
-    view_count: 14,
-  },
-  {
-    id: "11",
-    title: "Ergonomic Office Chair",
-    price: 90,
-    condition: "Good",
-    category: "furniture",
-    thumbnail_url: null,
-    seller_id: "u11",
-    created_at: "2026-03-08T10:00:00Z",
-    view_count: 31,
-  },
-  {
-    id: "12",
-    title: "Hydro Flask 32 oz Wide Mouth Bottle",
-    price: 20,
-    condition: "Like New",
-    category: "other",
-    thumbnail_url: null,
-    seller_id: "u12",
-    created_at: "2026-03-08T12:00:00Z",
-    view_count: 22,
-  },
-];
+type DbListingRow = {
+  id: string;
+  title: string;
+  description: string;
+  price_cents: number;
+  condition: Listing["condition"];
+  category: string;
+  thumbnail_url: string | null;
+  seller_id: string;
+  created_at: string;
+  view_count: number;
+  total_count: number;
+};
 
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   const { searchParams } = request.nextUrl;
-  const q = (searchParams.get("q") ?? "").toLowerCase().trim();
-  const category = (searchParams.get("category") ?? "").toLowerCase().trim();
-  const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
-  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? "20", 10)));
 
-  let results = MOCK_LISTINGS;
+  // Normalize raw query params into a typed shape before validation.
+  const raw = {
+    q: (searchParams.get("q") ?? "").trim(),
+    category: (searchParams.get("category") ?? "").trim(),
+    page: Number.parseInt(searchParams.get("page") ?? "1", 10),
+    limit: Number.parseInt(searchParams.get("limit") ?? "20", 10),
+  };
 
+  const parsed = listingsQuerySchema.safeParse(raw);
+
+  if (!parsed.success) {
+    return NextResponse.json(
+      {
+        error: "Validation failed.",
+        fields: parsed.error.issues.map((issue) => ({
+          field: issue.path[0] ?? "unknown",
+          message: issue.message,
+        })),
+      },
+      { status: 400 }
+    );
+  }
+
+  const { q, category, page, limit } = parsed.data;
+
+  const filters: string[] = [];
+  const params: (string | number)[] = [];
+
+  // Build WHERE clause incrementally with 1-based parameter indices.
   if (q) {
-    results = results.filter((l) => l.title.toLowerCase().includes(q));
+    params.push(q);
+    const tsQueryParamIndex = params.length;
+    // Use plainto_tsquery for simple user-entered search terms.
+    filters.push(`search_vector @@ plainto_tsquery('english', $${tsQueryParamIndex})`);
   }
+
   if (category) {
-    results = results.filter((l) => l.category === category);
+    params.push(category);
+    const categoryParamIndex = params.length;
+    filters.push(`LOWER(category) = $${categoryParamIndex}`);
   }
 
-  const start = (page - 1) * limit;
-  const paginated = results.slice(start, start + limit);
+  const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
 
-  return NextResponse.json({
-    listings: paginated,
-    total: results.length,
-    page,
-    limit,
-  });
+  // Pagination parameters
+  params.push(limit);
+  const limitIndex = params.length;
+  params.push((page - 1) * limit);
+  const offsetIndex = params.length;
+
+  // Order by relevance when searching, otherwise latest listings first.
+  const orderBy = q
+    ? "ORDER BY ts_rank(search_vector, plainto_tsquery('english', $1)) DESC, created_at DESC"
+    : "ORDER BY created_at DESC";
+
+  const sql = `
+    SELECT
+      id,
+      title,
+      description,
+      price_cents,
+      condition,
+      category,
+      thumbnail_url,
+      seller_id,
+      created_at,
+      view_count,
+      COUNT(*) OVER () AS total_count
+    FROM listings
+    ${whereClause}
+    ${orderBy}
+    LIMIT $${limitIndex}
+    OFFSET $${offsetIndex}
+  `;
+
+  let rows: DbListingRow[];
+  try {
+    const result = await db.query<DbListingRow>(sql, params);
+    rows = result.rows;
+  } catch (err) {
+    console.error("[GET /api/listings] DB error:", err);
+    return NextResponse.json(
+      { error: "Failed to fetch listings. Please try again." },
+      { status: 500 }
+    );
+  }
+
+  const total = rows[0]?.total_count ?? 0;
+
+  const listings: Listing[] = rows.map((row) => ({
+    id: row.id,
+    title: row.title,
+    description: row.description,
+    // Convert back to whole currency units for the API response.
+    price: row.price_cents / 100,
+    condition: row.condition,
+    category: row.category,
+    thumbnail_url: row.thumbnail_url,
+    seller_id: row.seller_id,
+    created_at: row.created_at,
+    view_count: row.view_count,
+  }));
+
+  return NextResponse.json(
+    {
+      listings,
+      total,
+      page,
+      limit,
+    },
+    { status: 200 }
+  );
 }
+

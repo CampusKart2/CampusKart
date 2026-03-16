@@ -1,6 +1,7 @@
 export type Listing = {
   id: string;
   title: string;
+  description: string;
   price: number;
   condition: "New" | "Like New" | "Good" | "Fair" | "Poor";
   category: string;

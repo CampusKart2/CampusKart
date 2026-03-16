@@ -11,7 +11,9 @@ interface ListingsGridProps {
   query?: string;
 }
 
-const SKELETON_COUNT = 12;
+// Keep skeleton count aligned with the default page size (20) so the loading
+// state matches the eventual number of items shown per page.
+const SKELETON_COUNT = 20;
 
 export default function ListingsGrid({
   listings,
