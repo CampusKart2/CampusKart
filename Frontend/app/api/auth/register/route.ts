@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { signupSchema } from "@/lib/validators/auth";
-import { db } from "@/lib/db";
+import { pool, query } from "@/lib/db";
 import { issueVerificationToken } from "@/lib/verification";
 import { sendVerificationEmail } from "@/lib/email";
 
@@ -60,11 +60,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   // ── 3. Duplicate-email check ───────────────────────────────────────────────
   // Run this BEFORE hashing to avoid the bcrypt cost on a certain failure.
-  const existing = await db.query<{ id: string }>(
+  const existing = await query<{ id: string }>(
     `SELECT id FROM users WHERE email = $1 LIMIT 1`,
     [email]
   );
-  if ((existing.rowCount ?? 0) > 0) {
+  if (existing.length > 0) {
     return NextResponse.json(
       { error: "An account with that email address already exists." },
       { status: 409 }
@@ -84,7 +84,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   let newUser: { id: string; full_name: string; email: string; email_verified: boolean; created_at: string };
   let verificationToken: string;
 
-  const client = await db.connect();
+  const client = await pool.connect();
   try {
     await client.query("BEGIN");
 

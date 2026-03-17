@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { z } from "zod";
-import { db } from "@/lib/db";
+import { pool, query } from "@/lib/db";
 import { verifySession, signSession } from "@/lib/session";
 
 const COOKIE_NAME = "campuskart_session";
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const { token } = parsed.data;
 
   // 2. Look up token and eagerly join user data in one round-trip
-  const result = await db.query<{
+  const rows = await query<{
     user_id: string;
     expires_at: Date;
     email_verified: boolean;
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     [token]
   );
 
-  if (result.rowCount === 0) {
+  if (rows.length === 0) {
     // Token not found: may have already been used or never existed
     return NextResponse.json(
       { error: "Invalid or expired verification link." },
@@ -57,12 +57,12 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const row = result.rows[0];
+  const row = rows[0];
 
   // 3. Check expiry (database stores UTC; JS Date comparison is safe)
   if (new Date() > row.expires_at) {
     // Clean up the stale token so the DB stays tidy
-    await db.query(
+    await query(
       `DELETE FROM email_verification_tokens WHERE token = $1`,
       [token]
     );
@@ -74,7 +74,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   // 4. Guard: already verified (idempotent but we still clean up the token)
   if (row.email_verified) {
-    await db.query(
+    await query(
       `DELETE FROM email_verification_tokens WHERE token = $1`,
       [token]
     );
@@ -87,7 +87,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   // 5. Mark user as verified + delete the consumed token — atomic transaction.
   // Must use a single client connection so BEGIN/UPDATE/DELETE/COMMIT all
   // land on the same backend connection (Pool.query() can round-robin).
-  const client = await db.connect();
+  const client = await pool.connect();
   try {
     await client.query("BEGIN");
     await client.query(

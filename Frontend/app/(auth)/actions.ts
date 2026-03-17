@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { signupSchema, loginSchema } from "@/lib/validators/auth";
-import { db } from "@/lib/db";
+import { pool, query } from "@/lib/db";
 import { signSession } from "@/lib/session";
 import { issueVerificationToken } from "@/lib/verification";
 import { sendVerificationEmail } from "@/lib/email";
@@ -51,7 +51,7 @@ export async function loginAction(
   const { email, password } = parsed.data;
 
   // Fetch user — use a generic error to avoid revealing whether address is registered
-  const result = await db.query<{
+  const rows = await query<{
     id: string;
     password_hash: string;
     email_verified: boolean;
@@ -60,7 +60,7 @@ export async function loginAction(
     [email]
   );
 
-  const user = result.rows[0];
+  const user = rows[0];
   const isValid = user ? await bcrypt.compare(password, user.password_hash) : false;
 
   if (!user || !isValid) {
@@ -94,11 +94,11 @@ export async function signupAction(
   const { full_name, email, password } = parsed.data;
 
   // Check for duplicate email before hashing (cheaper query first)
-  const existing = await db.query(
+  const existing = await query<{ id: string }>(
     `SELECT id FROM users WHERE email = $1 LIMIT 1`,
     [email]
   );
-  if ((existing.rowCount ?? 0) > 0) {
+  if (existing.length > 0) {
     return "An account with that email address already exists.";
   }
 
@@ -109,7 +109,7 @@ export async function signupAction(
   let newUserId: string;
   let verificationToken: string;
 
-  const client = await db.connect();
+  const client = await pool.connect();
   try {
     await client.query("BEGIN");
 

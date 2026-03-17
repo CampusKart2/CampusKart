@@ -24,10 +24,10 @@ if (existsSync(envPath)) {
 }
 
 async function main() {
-  const { db } = await import("../lib/db")
-  const { rows } = await db.query<{ time: Date }>("SELECT NOW() as time")
+  const { query } = await import("../lib/db")
+  const rows = await query<{ time: Date }>("SELECT NOW() as time")
   console.log("Connected at:", rows[0].time)
-  const { rows: cats } = await db.query<{ slug: string; name: string }>(
+  const cats = await query<{ slug: string; name: string }>(
     "SELECT slug, name FROM categories ORDER BY id"
   )
   console.log("Categories:", cats)

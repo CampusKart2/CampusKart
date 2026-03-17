@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { query } from "@/lib/db";
 
 /** DB row shape for categories with listing count (for landing page grid). */
 type CategoryRow = {
@@ -18,7 +18,7 @@ type CategoryRow = {
  */
 export async function GET(): Promise<NextResponse> {
   try {
-    const { rows } = await db.query<CategoryRow>(`
+    const rows = await query<CategoryRow>(`
       SELECT
         c.id,
         c.slug,
