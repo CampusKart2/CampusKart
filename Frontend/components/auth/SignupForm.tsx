@@ -13,7 +13,7 @@ interface Props {
 }
 
 interface FieldErrors {
-  name?: string;
+  full_name?: string;
   email?: string;
   password?: string;
   confirmPassword?: string;
@@ -107,7 +107,7 @@ export default function SignupForm({ from }: Props) {
   const [serverError, action, pending] = useActionState(signupAction, null);
 
   // Controlled field values
-  const [name, setName] = useState("");
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -141,7 +141,7 @@ export default function SignupForm({ from }: Props) {
         next.confirmPassword =
           confirmPassword !== password ? "Passwords do not match." : undefined;
       } else {
-        const val = field === "name" ? name : field === "email" ? email : password;
+        const val = field === "full_name" ? fullName : field === "email" ? email : password;
         next[field] = validateField(field, val);
       }
 
@@ -149,12 +149,12 @@ export default function SignupForm({ from }: Props) {
     });
   }
 
-  function handleNameChange(e: ChangeEvent<HTMLInputElement>) {
-    setName(e.target.value);
-    if (touched.current.name) {
+  function handleFullNameChange(e: ChangeEvent<HTMLInputElement>) {
+    setFullName(e.target.value);
+    if (touched.current.full_name) {
       setFieldErrors((prev) => ({
         ...prev,
-        name: validateField("name", e.target.value),
+        full_name: validateField("full_name", e.target.value),
       }));
     }
   }
@@ -195,13 +195,13 @@ export default function SignupForm({ from }: Props) {
   /** Run full client-side validation before letting the Server Action fire. */
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     // Mark all fields as touched
-    touched.current = { name: true, email: true, password: true, confirmPassword: true };
+    touched.current = { full_name: true, email: true, password: true, confirmPassword: true };
 
-    const schemaResult = signupSchema.safeParse({ name, email, password });
+    const schemaResult = signupSchema.safeParse({ full_name: fullName, email, password });
     const confirmErr = confirmPassword !== password ? "Passwords do not match." : undefined;
 
     const errors: FieldErrors = {
-      name:            schemaResult.success ? undefined : schemaResult.error.issues.find((i) => i.path[0] === "name")?.message,
+      full_name:       schemaResult.success ? undefined : schemaResult.error.issues.find((i) => i.path[0] === "full_name")?.message,
       email:           schemaResult.success ? undefined : schemaResult.error.issues.find((i) => i.path[0] === "email")?.message,
       password:        schemaResult.success ? undefined : schemaResult.error.issues.find((i) => i.path[0] === "password")?.message,
       confirmPassword: confirmErr,
@@ -250,26 +250,26 @@ export default function SignupForm({ from }: Props) {
           </p>
         )}
 
-        {/* ── Name ── */}
+        {/* ── Full name ── */}
         <div className="space-y-1.5">
-          <label htmlFor="name" className="block text-sm font-medium text-text-primary">
+          <label htmlFor="full_name" className="block text-sm font-medium text-text-primary">
             Full name
           </label>
           <input
-            id="name"
-            name="name"
+            id="full_name"
+            name="full_name"
             type="text"
             autoComplete="name"
             placeholder="Alex Rivera"
-            value={name}
-            onChange={handleNameChange}
-            onBlur={() => handleBlur("name")}
-            aria-invalid={!!fieldErrors.name}
-            aria-describedby={fieldErrors.name ? "name-error" : undefined}
-            className={inputClass("name")}
+            value={fullName}
+            onChange={handleFullNameChange}
+            onBlur={() => handleBlur("full_name")}
+            aria-invalid={!!fieldErrors.full_name}
+            aria-describedby={fieldErrors.full_name ? "full_name-error" : undefined}
+            className={inputClass("full_name")}
           />
-          {fieldErrors.name && (
-            <p id="name-error" className="text-xs text-danger mt-1">{fieldErrors.name}</p>
+          {fieldErrors.full_name && (
+            <p id="full_name-error" className="text-xs text-danger mt-1">{fieldErrors.full_name}</p>
           )}
         </div>
 
