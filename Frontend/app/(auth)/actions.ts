@@ -80,7 +80,7 @@ export async function signupAction(
   const from = (formData.get("from") as string) || "/";
 
   const parsed = signupSchema.safeParse({
-    name: (formData.get("name") as string ?? "").trim(),
+    full_name: (formData.get("full_name") as string ?? "").trim(),
     // Normalize to lowercase so duplicate-email check and DB unique constraint
     // are case-insensitive ("User@Pace.EDU" and "user@pace.edu" are the same account)
     email: (formData.get("email") as string ?? "").trim().toLowerCase(),
@@ -91,7 +91,7 @@ export async function signupAction(
     return parsed.error.issues[0].message;
   }
 
-  const { name, email, password } = parsed.data;
+  const { full_name, email, password } = parsed.data;
 
   // Check for duplicate email before hashing (cheaper query first)
   const existing = await query<{ id: string }>(
@@ -114,10 +114,10 @@ export async function signupAction(
     await client.query("BEGIN");
 
     const insertResult = await client.query<{ id: string }>(
-      `INSERT INTO users (name, email, password_hash, email_verified)
+      `INSERT INTO users (full_name, email, password_hash, email_verified)
        VALUES ($1, $2, $3, FALSE)
        RETURNING id`,
-      [name, email, passwordHash]
+      [full_name, email, passwordHash]
     );
     newUserId = insertResult.rows[0].id;
 
