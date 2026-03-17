@@ -21,14 +21,6 @@ function createPool(): Pool {
     connectionTimeoutMillis: 5_000,
   });
 
-  // Proactively surface misconfiguration/connectivity issues on startup.
-  pool
-    .connect()
-    .then((client) => client.release())
-    .catch((err: unknown) => {
-      console.error(CONNECTION_ERROR_MESSAGE, err);
-    });
-
   pool.on("error", (err) => {
     console.error(CONNECTION_ERROR_MESSAGE, err);
   });
@@ -36,14 +28,37 @@ function createPool(): Pool {
   return pool;
 }
 
-export const pool: Pool = globalForDb.dbPool ?? (globalForDb.dbPool = createPool());
+function getPool(): Pool {
+  if (!globalForDb.dbPool) {
+    globalForDb.dbPool = createPool();
+  }
+  return globalForDb.dbPool;
+}
+
+/**
+ * Lazy singleton Pool.
+ *
+ * Important: we intentionally do NOT create the pool at module load time so
+ * `next build` / CI can run without DATABASE_URL unless a route actually hits
+ * the database.
+ */
+export const pool: Pool = new Proxy({} as Pool, {
+  get(_target, prop: string | symbol): unknown {
+    const p = getPool();
+    const value = Reflect.get(p, prop) as unknown;
+    if (typeof value === "function") {
+      return (value as (...args: unknown[]) => unknown).bind(p);
+    }
+    return value;
+  },
+}) as unknown as Pool;
 
 export async function query<T extends QueryResultRow = QueryResultRow>(
   text: string,
   params?: unknown[]
 ): Promise<T[]> {
   try {
-    const result: QueryResult<T> = await pool.query<T>(text, params);
+    const result: QueryResult<T> = await getPool().query<T>(text, params);
     return result.rows;
   } catch (err) {
     console.error(CONNECTION_ERROR_MESSAGE, err);
