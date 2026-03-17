@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server"
-import { db } from "@/lib/db"
+import { query } from "@/lib/db"
 
 type TimeRow = { time: Date }
 type CategoryRow = { id: number; slug: string; name: string }
 
 export async function GET() {
   try {
-    const { rows: [timeRow] } = await db.query<TimeRow>("SELECT NOW() as time")
-    const { rows: categories } = await db.query<CategoryRow>(
+    const [timeRow] = await query<TimeRow>("SELECT NOW() as time")
+    const categories = await query<CategoryRow>(
       "SELECT id, slug, name FROM categories ORDER BY id"
     )
 

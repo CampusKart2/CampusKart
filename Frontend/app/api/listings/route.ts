@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { query } from "@/lib/db";
 import type { Listing } from "@/lib/types/listing";
 import { listingsQuerySchema } from "@/lib/validators/listings";
 
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   // When a category filter is present, ensure it exists; unknown slug → 404.
   if (category) {
-    const { rows: categoryRows } = await db.query<{ slug: string }>(
+    const categoryRows = await query<{ slug: string }>(
       "SELECT slug FROM categories WHERE slug = $1 LIMIT 1",
       [category]
     );
@@ -135,8 +135,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   let rows: DbListingRow[];
   try {
-    const result = await db.query<DbListingRow>(sql, params);
-    rows = result.rows;
+    rows = await query<DbListingRow>(sql, params);
   } catch (err) {
     console.error("[GET /api/listings] DB error:", err);
     return NextResponse.json(

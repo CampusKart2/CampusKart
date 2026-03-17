@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { loginSchema } from "@/lib/validators/auth";
-import { db } from "@/lib/db";
+import { query } from "@/lib/db";
 import { signSession } from "@/lib/session";
 
 const COOKIE_NAME = "campuskart_session";
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // Use a constant-time error path: always run bcrypt.compare even when the
   // user isn't found so response timing doesn't reveal whether an address is
   // registered (timing-safe against user-enumeration attacks).
-  const result = await db.query<{
+  const rows = await query<{
     id: string;
     password_hash: string;
     email_verified: boolean;
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     [email]
   );
 
-  const user = result.rows[0];
+  const user = rows[0];
 
   // Dummy hash keeps timing consistent when the email is not found
   const DUMMY_HASH =

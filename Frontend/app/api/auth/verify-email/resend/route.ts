@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { cookies } from "next/headers";
 import { verifySession } from "@/lib/session";
-import { db } from "@/lib/db";
+import { pool, query } from "@/lib/db";
 import { sendVerificationEmail } from "@/lib/email";
 
 // ─── POST /api/auth/verify-email/resend ────────────────────────────────────────
@@ -28,36 +28,39 @@ export async function POST(_req: NextRequest): Promise<NextResponse> {
   }
 
   // 3. Confirm user still exists in DB (session could outlive account deletion)
-  const userResult = await db.query<{ id: string }>(
+  const userRows = await query<{ id: string }>(
     `SELECT id FROM users WHERE id = $1 LIMIT 1`,
     [session.userId]
   );
-  if ((userResult.rowCount ?? 0) === 0) {
+  if (userRows.length === 0) {
     return NextResponse.json({ error: "User not found." }, { status: 404 });
   }
 
   // 4. Generate and store fresh token (replace any existing one — atomic TX)
   const token = randomBytes(32).toString("hex");
 
-  await db.query("BEGIN");
+  const client = await pool.connect();
   try {
-    await db.query(
+    await client.query("BEGIN");
+    await client.query(
       `DELETE FROM email_verification_tokens WHERE user_id = $1`,
       [session.userId]
     );
-    await db.query(
+    await client.query(
       `INSERT INTO email_verification_tokens (token, user_id, expires_at)
        VALUES ($1, $2, NOW() + INTERVAL '24 hours')`,
       [token, session.userId]
     );
-    await db.query("COMMIT");
+    await client.query("COMMIT");
   } catch (err) {
-    await db.query("ROLLBACK");
+    await client.query("ROLLBACK");
     console.error("[verify-email/resend] DB error:", err);
     return NextResponse.json(
       { error: "Failed to generate token. Please try again." },
       { status: 500 }
     );
+  } finally {
+    client.release();
   }
 
   // 5. Send email

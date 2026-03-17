@@ -1,42 +1,52 @@
+import { Pool, type QueryResult, type QueryResultRow } from "pg";
 
-import { Pool } from "pg";
+// prevents multiple pool instances in dev due to hot reload
+const globalForDb = global as typeof globalThis & { dbPool?: Pool };
 
-/**
- * Module-level singleton pool.
- * Next.js hot-reloads modules in development, which would exhaust DB connections.
- * Attaching to `globalThis` prevents duplicate pools across HMR cycles.
- */
-declare global {
-  // eslint-disable-next-line no-var
-  var _pgPool: Pool | undefined;
-}
+const CONNECTION_ERROR_MESSAGE =
+  "Failed to connect to database. Check DATABASE_URL in .env.local";
 
 function createPool(): Pool {
   const connectionString = process.env.DATABASE_URL;
   if (!connectionString) {
-    throw new Error("DATABASE_URL environment variable is not set.");
+    throw new Error("Missing required env var: DATABASE_URL");
   }
 
-  return new Pool({
+  const pool = new Pool({
     connectionString,
-    // Keep connections alive without overwhelming a small Postgres instance
+    // AWS RDS requires SSL
+    ssl: { rejectUnauthorized: false },
     max: 10,
     idleTimeoutMillis: 30_000,
     connectionTimeoutMillis: 5_000,
-    ssl:
-      process.env.NODE_ENV === "production"
-        ? { rejectUnauthorized: true }
-        : false,
   });
+
+  // Proactively surface misconfiguration/connectivity issues on startup.
+  pool
+    .connect()
+    .then((client) => client.release())
+    .catch((err: unknown) => {
+      console.error(CONNECTION_ERROR_MESSAGE, err);
+    });
+
+  pool.on("error", (err) => {
+    console.error(CONNECTION_ERROR_MESSAGE, err);
+  });
+
+  return pool;
 }
 
-// Lazy proxy — pool is created on first use, not at module load time.
-// This prevents build-time failures when DATABASE_URL is not set.
-export const db: Pool = new Proxy({} as Pool, {
-  get(_target, prop: string | symbol) {
-    const pool =
-      globalThis._pgPool ?? (globalThis._pgPool = createPool());
-    const value = (pool as any)[prop as string];
-    return typeof value === "function" ? value.bind(pool) : value;
-  },
-});
+export const pool: Pool = globalForDb.dbPool ?? (globalForDb.dbPool = createPool());
+
+export async function query<T extends QueryResultRow = QueryResultRow>(
+  text: string,
+  params?: unknown[]
+): Promise<T[]> {
+  try {
+    const result: QueryResult<T> = await pool.query<T>(text, params);
+    return result.rows;
+  } catch (err) {
+    console.error(CONNECTION_ERROR_MESSAGE, err);
+    throw err;
+  }
+}
