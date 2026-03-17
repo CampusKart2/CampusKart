@@ -1,6 +1,6 @@
 
 import { Pool } from "pg";
-
+import fs from "fs";
 /**
  * Module-level singleton pool.
  * Next.js hot-reloads modules in development, which would exhaust DB connections.
@@ -23,10 +23,11 @@ function createPool(): Pool {
     max: 10,
     idleTimeoutMillis: 30_000,
     connectionTimeoutMillis: 5_000,
-    ssl:
-      process.env.NODE_ENV === "production"
-        ? { rejectUnauthorized: true }
-        : false,
+    ssl: {
+    rejectUnauthorized: true,
+    ca: fs.readFileSync("/home/jenkins/certs/us-east-1-bundle.pem").toString(),
+
+    },
   });
 }
 

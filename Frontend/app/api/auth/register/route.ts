@@ -13,10 +13,10 @@ const BCRYPT_ROUNDS = 12;
 // Creates a new user account.
 //
 // Request body (JSON):
-//   { name: string, email: string (must be .edu), password: string }
+//   { full_name: string, email: string (must be .edu), password: string }
 //
 // Responses:
-//   201  Created   — { id, name, email, emailVerified, createdAt }
+//   201  Created   — { id, full_name, email, emailVerified, createdAt }
 //   400  Bad Req   — Zod validation failure
 //   409  Conflict  — Email already registered
 //   500  Error     — Unexpected server / DB error
@@ -35,9 +35,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     typeof body === "object" && body !== null
       ? {
           // Trim string fields at the API boundary before validation
-          name:     typeof (body as Record<string, unknown>).name     === "string" ? ((body as Record<string, unknown>).name as string).trim()     : (body as Record<string, unknown>).name,
-          email:    typeof (body as Record<string, unknown>).email    === "string" ? ((body as Record<string, unknown>).email as string).trim().toLowerCase() : (body as Record<string, unknown>).email,
-          password: (body as Record<string, unknown>).password,
+          full_name: typeof (body as Record<string, unknown>).full_name === "string" ? ((body as Record<string, unknown>).full_name as string).trim() : (body as Record<string, unknown>).full_name,
+          email:     typeof (body as Record<string, unknown>).email     === "string" ? ((body as Record<string, unknown>).email as string).trim().toLowerCase() : (body as Record<string, unknown>).email,
+          password:  (body as Record<string, unknown>).password,
         }
       : body
   );
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const { name, email, password } = parsed.data;
+  const { full_name, email, password } = parsed.data;
 
   // ── 3. Duplicate-email check ───────────────────────────────────────────────
   // Run this BEFORE hashing to avoid the bcrypt cost on a certain failure.
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // transaction so we can never have a user without a token to confirm with.
   // The email is sent AFTER COMMIT so a transient SMTP error never rolls
   // back a successfully created account.
-  let newUser: { id: string; name: string; email: string; email_verified: boolean; created_at: string };
+  let newUser: { id: string; full_name: string; email: string; email_verified: boolean; created_at: string };
   let verificationToken: string;
 
   const client = await db.connect();
@@ -91,15 +91,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     // 5a. Insert the user row
     const result = await client.query<{
       id: string;
-      name: string;
+      full_name: string;
       email: string;
       email_verified: boolean;
       created_at: string;
     }>(
-      `INSERT INTO users (name, email, password_hash, email_verified)
+      `INSERT INTO users (full_name, email, password_hash, email_verified)
        VALUES ($1, $2, $3, FALSE)
-       RETURNING id, name, email, email_verified, created_at`,
-      [name, email, passwordHash]
+       RETURNING id, full_name, email, email_verified, created_at`,
+      [full_name, email, passwordHash]
     );
     newUser = result.rows[0];
 
@@ -142,7 +142,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   return NextResponse.json(
     {
       id:            newUser.id,
-      name:          newUser.name,
+      full_name:      newUser.full_name,
       email:         newUser.email,
       emailVerified: newUser.email_verified,
       createdAt:     newUser.created_at,

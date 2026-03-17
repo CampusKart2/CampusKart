@@ -15,7 +15,7 @@ const COOKIE_TTL  = 60 * 60 * 24 * 7; // 7 days in seconds
 //   { email: string (.edu), password: string }
 //
 // Responses:
-//   200  OK           — { id, email, emailVerified }  +  Set-Cookie: campuskart_session
+//   200  OK           — { id, full_name, email, emailVerified }  +  Set-Cookie: campuskart_session
 //   400  Bad Request  — Zod validation failure
 //   401  Unauthorized — Wrong email or password
 //   500  Server Error — Unexpected DB / crypto failure
@@ -66,10 +66,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // registered (timing-safe against user-enumeration attacks).
   const result = await db.query<{
     id: string;
+    full_name: string;
     password_hash: string;
     email_verified: boolean;
   }>(
-    `SELECT id, password_hash, email_verified FROM users WHERE email = $1 LIMIT 1`,
+    `SELECT id, full_name, password_hash, email_verified FROM users WHERE email = $1 LIMIT 1`,
     [email]
   );
 
@@ -109,6 +110,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const response = NextResponse.json(
     {
       id:            user.id,
+      full_name:     user.full_name,
       email,
       emailVerified: user.email_verified,
     },

@@ -7,7 +7,7 @@ import { z } from "zod";
 const eduEmailRegex = /^[^\s@]+@[^\s@]+\.edu$/i;
 
 export const signupSchema = z.object({
-  name: z
+  full_name: z
     .string()
     .min(2, "Name must be at least 2 characters.")
     .max(80, "Name must be at most 80 characters."),
