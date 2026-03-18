@@ -80,7 +80,7 @@ export async function GET(
           l.price,
           l.condition,
           c.slug AS category,
-          l.thumbnail_url,
+          lp.url AS thumbnail_url,
           l.seller_id,
           l.created_at,
           l.view_count,
@@ -88,6 +88,7 @@ export async function GET(
         FROM listings l
         JOIN users u ON u.id = l.seller_id
         JOIN categories c ON c.id = l.category_id
+        LEFT JOIN listing_photos lp ON lp.listing_id = l.id AND lp.position = 0
         WHERE l.id = $1
         LIMIT 1
         FOR UPDATE
@@ -155,7 +156,7 @@ export async function GET(
     price: Number(row.price),
     condition: row.condition,
     category: row.category,
-    thumbnail_url: row.thumbnail_url,
+    thumbnail_url: row.thumbnail_url ?? null,
     seller_id: row.seller_id,
     created_at: row.created_at,
     view_count: row.view_count,
