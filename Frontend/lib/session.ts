@@ -1,5 +1,15 @@
-import { config } from "./config";
+/**
+ * lib/session.ts
+ *
+ * Lightweight JWT helpers built on the Web Crypto API (SubtleCrypto).
+ * Compatible with both the Next.js Edge Runtime (middleware) and
+ * the Node.js runtime (Server Actions, API Routes).
+ *
+ * Algorithm: HMAC-SHA256
+ * Secret:    config.jwtSecret (backed by JWT_SECRET env var, ≥ 32 chars)
+ */
 
+import { config } from "@/lib/config";
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 export interface SessionPayload {
@@ -65,11 +75,10 @@ const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
 
 /**
  * Sign a `SessionPayload` and return a compact JWT string.
- * Throws if `SESSION_SECRET` is not configured.
+ * Throws if JWT secret is not configured.
  */
 export async function signSession(payload: SessionPayload): Promise<string> {
   const secret = config.jwtSecret;
-  if (!secret) throw new Error("JWT_SECRET environment variable is not set.");
 
   const now = Math.floor(Date.now() / 1000);
   const claims: JwtClaims = {
@@ -99,7 +108,6 @@ export async function signSession(payload: SessionPayload): Promise<string> {
  */
 export async function verifySession(token: string): Promise<SessionPayload | null> {
   const secret = config.jwtSecret;
-  if (!secret) return null;
 
   const parts = token.split(".");
   if (parts.length !== 3) return null;

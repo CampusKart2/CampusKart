@@ -143,11 +143,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     {
       user: {
         id:            newUser.id,
-        full_name:      newUser.full_name,
+        full_name:     newUser.full_name,
         email:         newUser.email,
         email_verified: newUser.email_verified,
         created_at:     newUser.created_at,
-      }
+      },
     },
     { status: 201 }
   );

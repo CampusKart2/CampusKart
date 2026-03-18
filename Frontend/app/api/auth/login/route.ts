@@ -60,11 +60,19 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const { email, password } = parsed.data;
 
+  // ── 3. Look up user ────────────────────────────────────────────────────────
+  // Use a constant-time error path: always run bcrypt.compare even when the
+  // user isn't found so response timing doesn't reveal whether an address is
+  // registered (timing-safe against user-enumeration attacks).
+  let user:
+    | {
+        id: string;
+        full_name: string;
+        password_hash: string;
+        email_verified: boolean;
+      }
+    | undefined;
   try {
-    // ── 3. Look up user ────────────────────────────────────────────────────────
-    // Use a constant-time error path: always run bcrypt.compare even when the
-    // user isn't found so response timing doesn't reveal whether an address is
-    // registered (timing-safe against user-enumeration attacks).
     const rows = await query<{
       id: string;
       full_name: string;
@@ -74,8 +82,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       `SELECT id, full_name, password_hash, email_verified FROM users WHERE email = $1 LIMIT 1`,
       [email]
     );
-
-    const user = rows[0];
+    user = rows[0];
+  } catch (err) {
+    console.error("[POST /api/auth/login] DB error:", err);
+    return NextResponse.json(
+      { error: "Login failed. Please try again." },
+      { status: 500 }
+    );
+  }
 
     // Dummy hash keeps timing consistent when the email is not found
     const DUMMY_HASH =
@@ -119,7 +133,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     return response;
   } catch (err) {
-    console.error('[POST /api/auth/login] error:', err)
+    console.error("[POST /api/auth/login] error:", err);
     return NextResponse.json(
       { error: 'Login failed. Please try again.' },
       { status: 500 }
