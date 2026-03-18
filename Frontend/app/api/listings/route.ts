@@ -152,7 +152,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const total = rows[0]?.total_count ?? 0;
+  const total = Number(rows[0]?.total_count ?? 0);
 
   const listings: Listing[] = rows.map((row) => ({
     id: row.id,

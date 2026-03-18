@@ -13,7 +13,7 @@ type DbListingWithSellerRow = {
   id: string;
   title: string;
   description: string;
-  price_cents: number;
+  price: number;
   condition: Listing["condition"];
   category: string;
   thumbnail_url: string | null;
@@ -77,16 +77,17 @@ export async function GET(
           l.id,
           l.title,
           l.description,
-          l.price_cents,
+          l.price,
           l.condition,
-          l.category,
+          c.slug AS category,
           l.thumbnail_url,
           l.seller_id,
           l.created_at,
           l.view_count,
-          u.name AS seller_name
+          u.full_name AS seller_name
         FROM listings l
         JOIN users u ON u.id = l.seller_id
+        JOIN categories c ON c.id = l.category_id
         WHERE l.id = $1
         LIMIT 1
         FOR UPDATE
@@ -103,23 +104,33 @@ export async function GET(
         );
       }
 
-      const viewInsert = await client.query<{ inserted: number }>(
-        `
-        INSERT INTO listing_views (listing_id, session_hash)
-        VALUES ($1, $2)
-        ON CONFLICT (listing_id, session_hash) DO NOTHING
-        RETURNING 1 as inserted
-        `,
-        [id, sessionHash]
-      );
-
-      // Increment view_count only on the first view for this session.
-      if (viewInsert.rows.length > 0) {
-        const updated = await client.query<{ view_count: number }>(
-          `UPDATE listings SET view_count = view_count + 1 WHERE id = $1 RETURNING view_count`,
-          [id]
+      // Wrap listing_views in its own try/catch — if the table doesn't exist yet
+      // (migration not run) the listing still returns 200 rather than crashing.
+      try {
+        const viewInsert = await client.query<{ inserted: number }>(
+          `
+          INSERT INTO listing_views (listing_id, session_hash)
+          VALUES ($1, $2)
+          ON CONFLICT (listing_id, session_hash) DO NOTHING
+          RETURNING 1 as inserted
+          `,
+          [id, sessionHash]
         );
-        row.view_count = updated.rows[0]?.view_count ?? row.view_count + 1;
+
+        // Increment view_count only on the first view for this session.
+        if (viewInsert.rows.length > 0) {
+          const updated = await client.query<{ view_count: number }>(
+            `UPDATE listings SET view_count = view_count + 1 WHERE id = $1 RETURNING view_count`,
+            [id]
+          );
+          row.view_count = updated.rows[0]?.view_count ?? row.view_count + 1;
+        }
+      } catch (viewErr) {
+        console.warn(
+          "[GET /api/listings/:id] listing_views insert failed (table may not exist):",
+          viewErr
+        );
+        // Non-fatal — continue with existing view_count on the row.
       }
 
       await client.query("COMMIT");
@@ -141,7 +152,7 @@ export async function GET(
     id: row.id,
     title: row.title,
     description: row.description,
-    price: row.price_cents / 100,
+    price: Number(row.price),
     condition: row.condition,
     category: row.category,
     thumbnail_url: row.thumbnail_url,
