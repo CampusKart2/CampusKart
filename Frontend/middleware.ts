@@ -136,7 +136,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   if (refreshedToken) {
     res.cookies.set(COOKIE_NAME, refreshedToken, {
       httpOnly: true,
-      secure:   process.env.NODE_ENV === "production",
+      secure:   false, // Temporarily disabled for EC2 HTTP testing
       sameSite: "lax",
       maxAge:   COOKIE_TTL,
       path:     "/",
