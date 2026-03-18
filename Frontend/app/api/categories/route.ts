@@ -25,7 +25,7 @@ export async function GET(): Promise<NextResponse> {
         c.name,
         COUNT(l.id)::int AS listing_count
       FROM categories c
-      LEFT JOIN listings l ON LOWER(l.category) = c.slug
+      LEFT JOIN listings l ON l.category_id = c.id
       GROUP BY c.id, c.slug, c.name
       ORDER BY c.id
     `);

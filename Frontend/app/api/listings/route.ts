@@ -7,9 +7,9 @@ type DbListingRow = {
   id: string;
   title: string;
   description: string;
-  price_cents: number;
+  price: number;
   condition: Listing["condition"];
-  category: string;
+  category_slug: string;
   thumbnail_url: string | null;
   seller_id: string;
   created_at: string;
@@ -50,9 +50,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     parsed.data;
 
   // When a category filter is present, ensure it exists; unknown slug → 404.
+  let categoryId: number | null = null;
   if (category) {
-    const categoryRows = await query<{ slug: string }>(
-      "SELECT slug FROM categories WHERE slug = $1 LIMIT 1",
+    const categoryRows = await query<{ id: number }>(
+      "SELECT id FROM categories WHERE slug = $1 LIMIT 1",
       [category]
     );
     if (categoryRows.length === 0) {
@@ -61,6 +62,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         { status: 404 }
       );
     }
+    categoryId = categoryRows[0].id;
   }
 
   const filters: string[] = [];
@@ -72,32 +74,32 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const tsQueryParamIndex = params.length;
     // Use plainto_tsquery for simple user-entered search terms.
     filters.push(
-      `search_vector @@ plainto_tsquery('english', $${tsQueryParamIndex})`
+      `l.search_vector @@ plainto_tsquery('english', $${tsQueryParamIndex})`
     );
   }
 
-  if (category) {
-    params.push(category);
+  if (categoryId != null) {
+    params.push(categoryId);
     const categoryParamIndex = params.length;
-    filters.push(`LOWER(category) = $${categoryParamIndex}`);
+    filters.push(`l.category_id = $${categoryParamIndex}`);
   }
 
-  // Price range: API uses dollars; DB stores price_cents.
+  // Price range: API uses dollars; DB stores price as NUMERIC(10,2) in dollars.
   if (price_min != null) {
-    params.push(Math.round(price_min * 100));
+    params.push(price_min);
     const priceMinIndex = params.length;
-    filters.push(`price_cents >= $${priceMinIndex}`);
+    filters.push(`l.price >= $${priceMinIndex}`);
   }
   if (price_max != null) {
-    params.push(Math.round(price_max * 100));
+    params.push(price_max);
     const priceMaxIndex = params.length;
-    filters.push(`price_cents <= $${priceMaxIndex}`);
+    filters.push(`l.price <= $${priceMaxIndex}`);
   }
 
   if (condition) {
     params.push(condition);
     const conditionParamIndex = params.length;
-    filters.push(`condition = $${conditionParamIndex}`);
+    filters.push(`l.condition = $${conditionParamIndex}`);
   }
 
   const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
@@ -110,23 +112,29 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   // Order by relevance when searching, otherwise latest listings first.
   const orderBy = q
-    ? "ORDER BY ts_rank(search_vector, plainto_tsquery('english', $1)) DESC, created_at DESC"
+    ? "ORDER BY ts_rank(l.search_vector, plainto_tsquery('english', $1)) DESC, l.created_at DESC"
     : "ORDER BY created_at DESC";
 
   const sql = `
     SELECT
-      id,
-      title,
-      description,
-      price_cents,
-      condition,
-      category,
-      thumbnail_url,
-      seller_id,
-      created_at,
-      view_count,
+      l.id,
+      l.title,
+      l.description,
+      l.price,
+      l.condition,
+      c.slug AS category_slug,
+      (
+        SELECT lp.url
+        FROM listing_photos lp
+        WHERE lp.listing_id = l.id AND lp.position = 0
+        LIMIT 1
+      ) AS thumbnail_url,
+      l.seller_id,
+      l.created_at,
+      l.view_count,
       COUNT(*) OVER () AS total_count
-    FROM listings
+    FROM listings l
+    JOIN categories c ON c.id = l.category_id
     ${whereClause}
     ${orderBy}
     LIMIT $${limitIndex}
@@ -150,10 +158,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     id: row.id,
     title: row.title,
     description: row.description,
-    // Convert back to whole currency units for the API response.
-    price: row.price_cents / 100,
+    price: Number(row.price),
     condition: row.condition,
-    category: row.category,
+    category: row.category_slug,
     thumbnail_url: row.thumbnail_url,
     seller_id: row.seller_id,
     created_at: row.created_at,

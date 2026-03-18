@@ -60,70 +60,69 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   const { email, password } = parsed.data;
 
-  // ── 3. Look up user ────────────────────────────────────────────────────────
-  // Use a constant-time error path: always run bcrypt.compare even when the
-  // user isn't found so response timing doesn't reveal whether an address is
-  // registered (timing-safe against user-enumeration attacks).
-  const rows = await query<{
-    id: string;
-    full_name: string;
-    password_hash: string;
-    email_verified: boolean;
-  }>(
-    `SELECT id, full_name, password_hash, email_verified FROM users WHERE email = $1 LIMIT 1`,
-    [email]
-  );
-
-  const user = rows[0];
-
-  // Dummy hash keeps timing consistent when the email is not found
-  const DUMMY_HASH =
-    "$2b$12$invalidhashvaluethatbcryptwillalwaysrejectXXXXXXXXXXXXX";
-  const hashToCompare = user?.password_hash ?? DUMMY_HASH;
-  const passwordMatch  = await bcrypt.compare(password, hashToCompare);
-
-  if (!user || !passwordMatch) {
-    // Generic message — never reveal which field was wrong
-    return NextResponse.json(
-      { error: "Invalid email or password." },
-      { status: 401 }
-    );
-  }
-
-  // ── 4. Sign JWT ────────────────────────────────────────────────────────────
-  let token: string;
   try {
-    token = await signSession({
+    // ── 3. Look up user ────────────────────────────────────────────────────────
+    // Use a constant-time error path: always run bcrypt.compare even when the
+    // user isn't found so response timing doesn't reveal whether an address is
+    // registered (timing-safe against user-enumeration attacks).
+    const rows = await query<{
+      id: string;
+      full_name: string;
+      password_hash: string;
+      email_verified: boolean;
+    }>(
+      `SELECT id, full_name, password_hash, email_verified FROM users WHERE email = $1 LIMIT 1`,
+      [email]
+    );
+
+    const user = rows[0];
+
+    // Dummy hash keeps timing consistent when the email is not found
+    const DUMMY_HASH =
+      "$2b$12$invalidhashvaluethatbcryptwillalwaysrejectXXXXXXXXXXXXX";
+    const hashToCompare = user?.password_hash ?? DUMMY_HASH;
+    const passwordMatch  = await bcrypt.compare(password, hashToCompare);
+
+    if (!user || !passwordMatch) {
+      // Generic message — never reveal which field was wrong
+      return NextResponse.json(
+        { error: "Invalid email or password." },
+        { status: 401 }
+      );
+    }
+
+    // ── 4. Sign JWT ────────────────────────────────────────────────────────────
+    const token = await signSession({
       userId:        user.id,
       email,
       emailVerified: user.email_verified,
     });
-  } catch (err) {
-    console.error("[POST /api/auth/login] signSession error:", err);
-    return NextResponse.json(
-      { error: "Login failed. Please try again." },
-      { status: 500 }
+
+    // ── 5. Set httpOnly session cookie ─────────────────────────────────────────
+    const response = NextResponse.json(
+      {
+        id:            user.id,
+        full_name:     user.full_name,
+        email,
+        emailVerified: user.email_verified,
+      },
+      { status: 200 }
     );
+
+    response.cookies.set(COOKIE_NAME, token, {
+      httpOnly: true,
+      secure:   process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge:   COOKIE_TTL,
+      path:     "/",
+    });
+
+    return response;
+  } catch (err) {
+    console.error('[POST /api/auth/login] error:', err)
+    return NextResponse.json(
+      { error: 'Login failed. Please try again.' },
+      { status: 500 }
+    )
   }
-
-  // ── 5. Set httpOnly session cookie ─────────────────────────────────────────
-  const response = NextResponse.json(
-    {
-      id:            user.id,
-      full_name:     user.full_name,
-      email,
-      emailVerified: user.email_verified,
-    },
-    { status: 200 }
-  );
-
-  response.cookies.set(COOKIE_NAME, token, {
-    httpOnly: true,
-    secure:   process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge:   COOKIE_TTL,
-    path:     "/",
-  });
-
-  return response;
 }
