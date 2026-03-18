@@ -130,8 +130,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   } catch (err) {
     console.error("[POST /api/auth/login] error:", err);
     return NextResponse.json(
-      { error: "Login failed. Please try again." },
+      { error: 'Login failed. Please try again.' },
       { status: 500 }
-    );
+    )
   }
 }

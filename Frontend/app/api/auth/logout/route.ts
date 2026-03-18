@@ -42,13 +42,11 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
 
 // ─── POST /api/auth/logout ─────────────────────────────────────────────────────
 //
-// Kept for backward-compatibility: the logoutAction Server Action (used by
-// form submissions in the UI) calls this method.  No auth check needed here
-// because clearing an already-absent cookie is harmless.
-//
-// Responses:
-//   200  { message: "Logged out." }
-
 export async function POST(_req: NextRequest): Promise<NextResponse> {
+  const token = _req.cookies.get(COOKIE_NAME)?.value;
+  if (!token || !(await verifySession(token))) {
+    return NextResponse.json({ error: "Not authenticated." }, { status: 401 });
+  }
+
   return clearSession({ message: "Logged out." }, 200);
 }
