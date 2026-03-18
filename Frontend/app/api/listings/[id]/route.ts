@@ -91,7 +91,7 @@ export async function GET(
         LEFT JOIN listing_photos lp ON lp.listing_id = l.id AND lp.position = 0
         WHERE l.id = $1
         LIMIT 1
-        FOR UPDATE
+        FOR UPDATE OF l
         `,
         [id]
       );
