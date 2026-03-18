@@ -119,7 +119,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     response.cookies.set(COOKIE_NAME, token, {
       httpOnly: true,
-      secure:   process.env.NODE_ENV === "production",
+      secure:   false, // Temporarily disabled for EC2 HTTP testing
       sameSite: "lax",
       maxAge:   COOKIE_TTL,
       path:     "/",
