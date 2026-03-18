@@ -31,16 +31,6 @@ const AUTH_REQUIRED_PAGES = [
 ];
 
 /**
- * Page routes that additionally require email_verified === true.
- * Authenticated-but-unverified users are redirected to /verify-email.
- */
-const VERIFIED_REQUIRED_PAGES = [
-  "/listings/new",
-  "/messages",
-  "/chat",
-];
-
-/**
  * API route prefixes whose mutating methods (POST / PUT / PATCH / DELETE)
  * require email_verified === true.
  * Unverified callers receive 401 JSON.
@@ -123,7 +113,6 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   // ── 3. Email-verification gate ────────────────────────────────────────────
   //
   //  API routes: return 401 JSON for write methods on restricted prefixes.
-  //  Page routes: redirect to /verify-email for restricted pages.
   //
   if (isApiRoute) {
     if (
@@ -138,11 +127,6 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
           "Email verification required. Please verify your .edu address before continuing."
         );
       }
-    }
-  } else {
-    if (session && !session.emailVerified && matchesPrefix(pathname, VERIFIED_REQUIRED_PAGES)) {
-      const verifyUrl = new URL("/verify-email", request.url);
-      return NextResponse.redirect(verifyUrl);
     }
   }
 
