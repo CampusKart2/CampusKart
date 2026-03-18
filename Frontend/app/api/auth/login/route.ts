@@ -64,15 +64,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // Use a constant-time error path: always run bcrypt.compare even when the
   // user isn't found so response timing doesn't reveal whether an address is
   // registered (timing-safe against user-enumeration attacks).
-  let user:
-    | {
-        id: string;
-        full_name: string;
-        password_hash: string;
-        email_verified: boolean;
-      }
-    | undefined;
   try {
+    let user:
+      | {
+          id: string;
+          full_name: string;
+          password_hash: string;
+          email_verified: boolean;
+        }
+      | undefined;
+
     const rows = await query<{
       id: string;
       full_name: string;
@@ -83,13 +84,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       [email]
     );
     user = rows[0];
-  } catch (err) {
-    console.error("[POST /api/auth/login] DB error:", err);
-    return NextResponse.json(
-      { error: "Login failed. Please try again." },
-      { status: 500 }
-    );
-  }
 
     // Dummy hash keeps timing consistent when the email is not found
     const DUMMY_HASH =
@@ -105,14 +99,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // ── 4. Sign JWT ────────────────────────────────────────────────────────────
+    // ── 4. Sign JWT ──────────────────────────────────────────────────────────
     const token = await signSession({
       userId:        user.id,
       email,
       emailVerified: user.email_verified,
     });
 
-    // ── 5. Set httpOnly session cookie ─────────────────────────────────────────
+    // ── 5. Set httpOnly session cookie ───────────────────────────────────────
     const response = NextResponse.json(
       {
         id:            user.id,
@@ -132,6 +126,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
 
     return response;
+
   } catch (err) {
     console.error("[POST /api/auth/login] error:", err);
     return NextResponse.json(
