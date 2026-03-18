@@ -141,11 +141,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // ── 7. Return the created user (never include password_hash) ──────────────
   return NextResponse.json(
     {
-      id:            newUser.id,
-      full_name:      newUser.full_name,
-      email:         newUser.email,
-      emailVerified: newUser.email_verified,
-      createdAt:     newUser.created_at,
+      user: {
+        id:            newUser.id,
+        full_name:     newUser.full_name,
+        email:         newUser.email,
+        email_verified: newUser.email_verified,
+        created_at:     newUser.created_at,
+      },
     },
     { status: 201 }
   );

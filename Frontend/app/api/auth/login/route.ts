@@ -64,17 +64,32 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // Use a constant-time error path: always run bcrypt.compare even when the
   // user isn't found so response timing doesn't reveal whether an address is
   // registered (timing-safe against user-enumeration attacks).
-  const rows = await query<{
-    id: string;
-    full_name: string;
-    password_hash: string;
-    email_verified: boolean;
-  }>(
-    `SELECT id, full_name, password_hash, email_verified FROM users WHERE email = $1 LIMIT 1`,
-    [email]
-  );
-
-  const user = rows[0];
+  let user:
+    | {
+        id: string;
+        full_name: string;
+        password_hash: string;
+        email_verified: boolean;
+      }
+    | undefined;
+  try {
+    const rows = await query<{
+      id: string;
+      full_name: string;
+      password_hash: string;
+      email_verified: boolean;
+    }>(
+      `SELECT id, full_name, password_hash, email_verified FROM users WHERE email = $1 LIMIT 1`,
+      [email]
+    );
+    user = rows[0];
+  } catch (err) {
+    console.error("[POST /api/auth/login] DB error:", err);
+    return NextResponse.json(
+      { error: "Login failed. Please try again." },
+      { status: 500 }
+    );
+  }
 
   // Dummy hash keeps timing consistent when the email is not found
   const DUMMY_HASH =
@@ -99,7 +114,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       emailVerified: user.email_verified,
     });
   } catch (err) {
-    console.error("[POST /api/auth/login] signSession error:", err);
+    console.error("[POST /api/auth/login] error:", err);
     return NextResponse.json(
       { error: "Login failed. Please try again." },
       { status: 500 }

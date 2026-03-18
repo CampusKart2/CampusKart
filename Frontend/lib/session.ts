@@ -6,9 +6,10 @@
  * the Node.js runtime (Server Actions, API Routes).
  *
  * Algorithm: HMAC-SHA256
- * Secret:    SESSION_SECRET env var (≥ 32 random chars recommended)
+ * Secret:    config.jwtSecret (backed by JWT_SECRET env var, ≥ 32 chars)
  */
 
+import { config } from "@/lib/config";
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 export interface SessionPayload {
@@ -74,11 +75,10 @@ const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
 
 /**
  * Sign a `SessionPayload` and return a compact JWT string.
- * Throws if `SESSION_SECRET` is not configured.
+ * Throws if JWT secret is not configured.
  */
 export async function signSession(payload: SessionPayload): Promise<string> {
-  const secret = process.env.SESSION_SECRET;
-  if (!secret) throw new Error("SESSION_SECRET environment variable is not set.");
+  const secret = config.jwtSecret;
 
   const now = Math.floor(Date.now() / 1000);
   const claims: JwtClaims = {
@@ -107,8 +107,7 @@ export async function signSession(payload: SessionPayload): Promise<string> {
  * invalid, has been tampered with, or has expired.
  */
 export async function verifySession(token: string): Promise<SessionPayload | null> {
-  const secret = process.env.SESSION_SECRET;
-  if (!secret) return null;
+  const secret = config.jwtSecret;
 
   const parts = token.split(".");
   if (parts.length !== 3) return null;
