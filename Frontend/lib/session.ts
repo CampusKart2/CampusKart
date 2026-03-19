@@ -49,12 +49,12 @@ function decodeBase64url(value: string): string {
   return atob(padded);
 }
 
-/** Decode a base64url string back to an ArrayBuffer (used to verify signatures). */
-function base64urlToArrayBuffer(value: string): ArrayBuffer {
+/** Decode a base64url string to a Uint8Array (used to verify signatures). */
+function base64urlToUint8Array(value: string): Uint8Array {
   const str = decodeBase64url(value);
   const bytes = new Uint8Array(str.length);
   for (let i = 0; i < str.length; i++) bytes[i] = str.charCodeAt(i);
-  return bytes.buffer as ArrayBuffer;
+  return bytes;
 }
 
 /** Import the raw secret bytes as an HMAC-SHA256 CryptoKey. */
@@ -117,9 +117,9 @@ export async function verifySession(token: string): Promise<SessionPayload | nul
   try {
     const key = await importKey(secret);
     const signingInput = new TextEncoder().encode(`${header}.${body}`);
-    const sigBytes = base64urlToArrayBuffer(signature);
+    const sigBytes = base64urlToUint8Array(signature);
 
-    const valid = await crypto.subtle.verify("HMAC", key, sigBytes, signingInput);
+    const valid = await crypto.subtle.verify("HMAC", key, sigBytes as unknown as BufferSource, signingInput);
     if (!valid) return null;
 
     const claims = JSON.parse(decodeBase64url(body)) as Partial<JwtClaims>;
@@ -143,8 +143,9 @@ export async function verifySession(token: string): Promise<SessionPayload | nul
       email: claims.email,
       emailVerified: claims.emailVerified,
     };
-  } catch {
+  } catch (err) {
     // Any decode / crypto error → treat as invalid
+    console.error(`[verifySession] Failed to verify token:`, err);
     return null;
   }
 }

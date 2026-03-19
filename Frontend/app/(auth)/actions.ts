@@ -23,7 +23,7 @@ async function setSessionCookie(
   const store = await cookies();
   store.set(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: false, // Temporarily disabled for HTTP testing
     sameSite: "lax",
     maxAge: COOKIE_TTL,
     path: "/",
