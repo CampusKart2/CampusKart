@@ -81,7 +81,7 @@ pipeline {
           echo "Working Directory:"
           pwd
           echo
-          echo "Workspace Contents:"
+          echo "Workspace Contents: "
           ls -la
         '''
       }
