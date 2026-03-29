@@ -21,11 +21,11 @@ pipeline {
         script {
           def branch = env.BRANCH_NAME ?: env.GIT_BRANCH ?: ''
 
-          if (branch == 'qa') {
-            env.TARGET_ENV = 'QA'
+          if (branch == 'QA') {
+            env.TARGET_ENV = 'qa'
             env.DEPLOY_ALLOWED = 'true'
-          } else if (branch == 'dev') {
-            env.TARGET_ENV = 'LIVE'
+          } else if (branch == 'main') {
+            env.TARGET_ENV = 'dev'
             env.DEPLOY_ALLOWED = 'true'
           } else {
             env.TARGET_ENV = 'NON_DEPLOY'
@@ -58,7 +58,7 @@ pipeline {
         script {
           def branch = env.BRANCH_NAME ?: env.GIT_BRANCH ?: ''
 
-          if (!(branch in ['qa', 'dev'])) {
+          if (!(branch in ['QA', 'main'])) {
             echo "This branch is not configured for deployment."
             echo "Pipeline will run base checks only."
           } else {
