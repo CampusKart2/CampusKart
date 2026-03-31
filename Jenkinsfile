@@ -1,7 +1,7 @@
 @Library('my-shared-lib') _
 
 pipeline {
-  agent { label 'dev-agent' }
+  agent any
 
   options {
     skipDefaultCheckout(true)
