@@ -68,14 +68,35 @@ pipeline {
     }
 
     stage('Smoke (testRigor)') {
+      when {
+        expression { env.BRANCH_NAME == 'dev' || env.BRANCH_NAME == 'QA' }
+      }
       steps {
-        withCredentials([string(credentialsId: 'TESTRIGOR_TOKEN', variable: 'TR_TOKEN')]) {
-          sh '''
+        script {
+          def trAppId = ''
+          def trToken = ''
+          def envName = ''
+
+          if (env.BRANCH_NAME == 'dev') {
+            trAppId = 'MHSYf9zssrMoippDT'
+            trToken = '2faab20a-9466-466b-8d0d-99c97338bfbc'
+            envName = 'dev'
+          } else if (env.BRANCH_NAME == 'QA') {
+            trAppId = 'Dco3jJ2ejL9PweWr2'
+            trToken = '8ebc4045-b5e1-4191-9b7c-cc075ac8bfbb'
+            envName = 'QA'
+          } else {
+            error("No testRigor mapping found for branch: ${env.BRANCH_NAME}")
+          }
+
+          echo "Running testRigor smoke tests for ${envName} branch"
+
+          sh """
             curl -X POST \
-              -H "Content-type: application/json" \
-              -H "auth-token: $TR_TOKEN" \
+              -H 'Content-type: application/json' \
+              -H 'auth-token: ${trToken}' \
               --data '{"forceCancelPreviousTesting":true,"storedValues":{"storedValueName1":"Value"}}' \
-              https://api.testrigor.com/api/v1/apps/MHSYf9zssrMoippDT/retest
+              https://api.testrigor.com/api/v1/apps/${trAppId}/retest
 
             sleep 10
 
@@ -83,15 +104,19 @@ pipeline {
             do
               echo " "
               echo "==================================="
-              echo " Checking run status"
+              echo " Checking run status for ${envName}"
               echo "==================================="
-              response=$(curl -i -o - -s -X GET 'https://api.testrigor.com/api/v1/apps/MHSYf9zssrMoippDT/status' -H "auth-token: $TR_TOKEN" -H 'Accept: application/json')
-              code=$(echo "$response" | grep HTTP | awk '{print $2}')
-              body=$(echo "$response" | sed -n '/{/,/}/p')
-              echo "Status code: $code"
-              echo "Response: $body"
+              response=\$(curl -i -o - -s -X GET 'https://api.testrigor.com/api/v1/apps/${trAppId}/status' \
+                -H 'auth-token: ${trToken}' \
+                -H 'Accept: application/json')
 
-              case $code in
+              code=\$(echo "\$response" | grep HTTP | awk '{print \$2}')
+              body=\$(echo "\$response" | sed -n '/{/,/}/p')
+
+              echo "Status code: \$code"
+              echo "Response: \$body"
+
+              case \$code in
                 4*|5*)
                   echo "Error calling API"
                   exit 1
@@ -119,7 +144,7 @@ pipeline {
 
               sleep 10
             done
-          '''
+          """
         }
       }
     }
