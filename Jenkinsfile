@@ -18,7 +18,6 @@ pipeline {
   }
 
   stages {
-
     stage('Checkout') {
       steps {
         checkout scm
@@ -26,7 +25,6 @@ pipeline {
     }
 
     stage('Notify Start') {
-      agent any
       steps {
         script {
           notifySlack('STARTED', '#jenkins')
@@ -34,22 +32,11 @@ pipeline {
       }
     }
 
-    stage('Build Frontend') {
-      steps {
-        dir('Frontend') {
-          sh '''
-            npm ci
-            npm run build
-          '''
-        }
-      }
-    }
-
     stage('Build Docker Image') {
       steps {
-        sh '''
-          docker build -t $APP_NAME .
-        '''
+        dir('Frontend') {
+          sh 'docker build -t $APP_NAME .'
+        }
       }
     }
 
@@ -87,15 +74,12 @@ pipeline {
         }
       }
     }
-
   }
 
   post {
     always {
-      node('qa') {
-        script {
-          notifySlack(currentBuild.currentResult, '#jenkins')
-        }
+      script {
+        notifySlack(currentBuild.currentResult, '#jenkins')
       }
     }
   }
