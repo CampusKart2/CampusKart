@@ -39,6 +39,7 @@ pipeline {
           mkdir -p "$DEPLOY_DIR/Frontend"
           rsync -av --delete \
             --exclude='.git' \
+			--exclude='.env.local' \
             --exclude='node_modules' \
             --exclude='.next' \
             ./ "$DEPLOY_DIR/"
