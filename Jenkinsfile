@@ -72,16 +72,19 @@ pipeline {
     }
 
     stage('Run New Container') {
-      steps {
-        sh '''
-          docker run -d \
-            --restart unless-stopped \
-            --name $CONTAINER_NAME \
-            -p $PORT:$PORT \
-            $APP_NAME
-        '''
-      }
-    }
+  steps {
+    sh '''
+      docker rm -f $CONTAINER_NAME || true
+
+      docker run -d \
+        --restart unless-stopped \
+        --name $CONTAINER_NAME \
+        -p $PORT:$PORT \
+        --env-file "$DEPLOY_DIR/Frontend/.env.local" \
+        $APP_NAME
+    '''
+  }
+}
 
     stage('Wait for App') {
       steps {
