@@ -12,6 +12,7 @@ pipeline {
   }
 
   environment {
+    DEPLOY_DIR = "${env.HOME}/CampusKart"
     APP_NAME = 'campuskart-app'
     CONTAINER_NAME = 'campuskart-container'
     PORT = '3000'
@@ -32,11 +33,24 @@ pipeline {
       }
     }
 
-    stage('Build Docker Image') {
+    stage('Copy Files to Deploy Folder') {
       steps {
-        dir('Frontend') {
-          sh 'docker build -t $APP_NAME .'
-        }
+        sh '''
+          mkdir -p "$DEPLOY_DIR/Frontend"
+          rsync -av --delete \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='.next' \
+            ./ "$DEPLOY_DIR/"
+        '''
+      }
+    }
+
+    stage('Stop Host Process on 3000') {
+      steps {
+        sh '''
+          fuser -k 3000/tcp || true
+        '''
       }
     }
 
@@ -45,6 +59,14 @@ pipeline {
         sh '''
           docker stop $CONTAINER_NAME || true
           docker rm $CONTAINER_NAME || true
+        '''
+      }
+    }
+
+    stage('Build Docker Image') {
+      steps {
+        sh '''
+          docker build -t $APP_NAME -f "$DEPLOY_DIR/Frontend/Dockerfile" "$DEPLOY_DIR/Frontend"
         '''
       }
     }
@@ -69,7 +91,7 @@ pipeline {
 
     stage('Smoke (testRigor)') {
       when {
-        expression { env.BRANCH_NAME == 'dev' || env.BRANCH_NAME == 'QA' }
+        expression { env.BRANCH_NAME == 'main' || env.BRANCH_NAME == 'QA' }
       }
       steps {
         script {
@@ -77,10 +99,10 @@ pipeline {
           def trToken = ''
           def envName = ''
 
-          if (env.BRANCH_NAME == 'dev') {
+          if (env.BRANCH_NAME == 'main') {
             trAppId = 'MHSYf9zssrMoippDT'
             trToken = '2faab20a-9466-466b-8d0d-99c97338bfbc'
-            envName = 'dev'
+            envName = 'DEV'
           } else if (env.BRANCH_NAME == 'QA') {
             trAppId = 'Dco3jJ2ejL9PweWr2'
             trToken = '8ebc4045-b5e1-4191-9b7c-cc075ac8bfbb'
@@ -89,7 +111,7 @@ pipeline {
             error("No testRigor mapping found for branch: ${env.BRANCH_NAME}")
           }
 
-          echo "Running testRigor smoke tests for ${envName} branch"
+          echo "Running testRigor smoke tests for ${envName}"
 
           sh """
             curl -X POST \
