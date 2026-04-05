@@ -101,7 +101,12 @@ export default async function ListingDetailPage({
             <div className="mt-4 rounded-card border border-border bg-surface p-3">
               <div className="text-xs font-semibold text-text-muted">Seller</div>
               <div className="mt-0.5 text-sm font-semibold text-text-primary">
-                {listing.seller.name}
+                <Link
+                  href={`/sellers/${listing.seller.id}`}
+                  className="text-primary hover:underline"
+                >
+                  {listing.seller.name}
+                </Link>
               </div>
             </div>
 
