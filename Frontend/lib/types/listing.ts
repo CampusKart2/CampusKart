@@ -10,3 +10,9 @@ export type Listing = {
   created_at: string;
   view_count: number;
 };
+
+export type NearbyListing = Listing & {
+  distance_meters: number;
+  distance_km: number;
+  distance_miles: number;
+};

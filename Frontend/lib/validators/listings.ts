@@ -82,3 +82,43 @@ export const listingsQuerySchema = z
 
 export type ListingsQueryInput = z.infer<typeof listingsQuerySchema>;
 
+/**
+ * Querystring validation for GET /api/listings/nearby.
+ *
+ * Latitude/longitude are required and constrained to valid WGS84 bounds.
+ * Radius is expressed in kilometers and capped at 50 km per product rules.
+ */
+export const nearbyListingsQuerySchema = z.object({
+  lat: z.preprocess(
+    (value) =>
+      value === "" || value === null || value === undefined
+        ? undefined
+        : Number(value),
+    z
+      .number({ message: "lat must be a number." })
+      .min(-90, "lat must be between -90 and 90.")
+      .max(90, "lat must be between -90 and 90.")
+  ),
+  lng: z.preprocess(
+    (value) =>
+      value === "" || value === null || value === undefined
+        ? undefined
+        : Number(value),
+    z
+      .number({ message: "lng must be a number." })
+      .min(-180, "lng must be between -180 and 180.")
+      .max(180, "lng must be between -180 and 180.")
+  ),
+  radius: z.preprocess(
+    (value) =>
+      value === "" || value === null || value === undefined
+        ? undefined
+        : Number(value),
+    z
+      .number({ message: "radius must be a number." })
+      .positive("radius must be greater than 0.")
+      .max(50, "radius must be at most 50 km.")
+  ),
+});
+
+export type NearbyListingsQueryInput = z.infer<typeof nearbyListingsQuerySchema>;
