@@ -3,10 +3,10 @@
 import ListingCard from "./ListingCard";
 import ListingCardSkeleton from "./ListingCardSkeleton";
 import EmptyState from "./EmptyState";
-import type { Listing } from "@/lib/types/listing";
+import type { Listing, NearbyListing } from "@/lib/types/listing";
 
 interface ListingsGridProps {
-  listings: Listing[];
+  listings: Array<Listing | NearbyListing>;
   loading?: boolean;
   query?: string;
 }

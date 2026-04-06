@@ -1,13 +1,12 @@
 import { Suspense } from "react";
 import SearchBar from "@/components/listings/SearchBar";
-import ListingsGrid from "@/components/listings/ListingsGrid";
 import ListingCardSkeleton from "@/components/listings/ListingCardSkeleton";
 import FilterSidebarClientWrapper from "@/components/listings/FilterSidebarClientWrapper";
 import MobileFilterButtonWrapper from "@/components/listings/MobileFilterButtonWrapper";
 import ActiveFilterChips from "@/components/listings/ActiveFilterChips";
+import ListingsDiscoveryPanel from "@/components/listings/ListingsDiscoveryPanel";
 import type { Listing } from "@/lib/types/listing";
 import type { ListingCondition } from "@/lib/validators/listings";
-import { formatListingsCount } from "@/lib/listings-browse";
 
 export interface ListingsBrowseViewProps {
   listings: Listing[];
@@ -85,16 +84,8 @@ export function ListingsBrowseView({
             />
           </Suspense>
 
-          <p className="text-sm text-text-secondary">
-            {listings.length === 0
-              ? q
-                ? `No results for "${q}"`
-                : "No listings found"
-              : `${formatListingsCount(listings.length)} result${listings.length !== 1 ? "s" : ""}${q ? ` for "${q}"` : ""}`}
-          </p>
-
           <Suspense fallback={<SkeletonGrid />}>
-            <ListingsGrid listings={listings} query={q} />
+            <ListingsDiscoveryPanel listings={listings} q={q} />
           </Suspense>
         </div>
       </main>
