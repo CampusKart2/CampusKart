@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import type { Listing } from "@/lib/types/listing";
+import type { Listing, NearbyListing } from "@/lib/types/listing";
 
 const CONDITION_CLASSES: Record<Listing["condition"], string> = {
   New: "bg-badge-new text-white",
@@ -11,11 +11,13 @@ const CONDITION_CLASSES: Record<Listing["condition"], string> = {
 };
 
 interface ListingCardProps {
-  listing: Listing;
+  listing: Listing | NearbyListing;
 }
 
 export default function ListingCard({ listing }: ListingCardProps) {
   const { id, title, price, condition, category, thumbnail_url } = listing;
+  const distanceLabel =
+    "distance_miles" in listing ? `${listing.distance_miles.toFixed(1)} mi away` : null;
 
   return (
     <Link
@@ -50,6 +52,12 @@ export default function ListingCard({ listing }: ListingCardProps) {
             </svg>
           </div>
         )}
+
+        {distanceLabel ? (
+          <div className="absolute left-2 top-2 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold text-text-primary shadow-sm backdrop-blur">
+            {distanceLabel}
+          </div>
+        ) : null}
       </div>
 
       {/* Content */}

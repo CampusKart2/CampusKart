@@ -238,7 +238,7 @@ CampusKart/
 
 ---
 
-## Current Status & Roadmap
+## Current Status & Roadmap 
 
 ### Timeline
 
