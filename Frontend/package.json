@@ -18,6 +18,7 @@
     "psql": "^0.0.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "uploadthing": "^7.7.4",
     "zod": "^4.3.6"
   },
   "devDependencies": {
