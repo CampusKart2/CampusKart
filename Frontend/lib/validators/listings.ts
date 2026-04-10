@@ -82,6 +82,52 @@ export const listingsQuerySchema = z
 
 export type ListingsQueryInput = z.infer<typeof listingsQuerySchema>;
 
+export const createListingBodySchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(5, "Title must be at least 5 characters.")
+    .max(120, "Title must be at most 120 characters."),
+  description: z
+    .string()
+    .trim()
+    .min(10, "Description must be at least 10 characters.")
+    .max(1500, "Description must be at most 1500 characters."),
+  price: z.preprocess(
+    (value) => (typeof value === "string" ? Number(value) : value),
+    z
+      .number({ message: "Price must be a number." })
+      .min(0, "Price must be at least 0.")
+  ),
+  condition: z.enum(LISTING_CONDITIONS, {
+    error: "Condition must be one of: New, Like New, Good, Fair, Poor.",
+  }),
+  category: z
+    .string()
+    .trim()
+    .min(1, "Category is required.")
+    .max(64, "Category must be at most 64 characters.")
+    .transform((value) => value.toLowerCase()),
+  photoUrls: z
+    .array(z.string().trim().url("Each photo URL must be valid."))
+    .min(1, "Add at least one photo URL.")
+    .max(5, "Please provide at most 5 photos."),
+});
+
+export const createListingDetailsSchema = createListingBodySchema.pick({
+  title: true,
+  description: true,
+  price: true,
+  condition: true,
+  category: true,
+});
+
+export const createListingPhotosSchema = createListingBodySchema.pick({
+  photoUrls: true,
+});
+
+export type CreateListingBodyInput = z.infer<typeof createListingBodySchema>;
+
 /**
  * Querystring validation for GET /api/listings/nearby.
  *
