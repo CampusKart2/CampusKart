@@ -13,7 +13,7 @@ pipeline {
 
   environment {
     DEPLOY_DIR = "${env.HOME}/CampusKart"
-    APP_NAME = 'campuskart-app'
+    APP_DIR = "${env.HOME}/CampusKart/Frontend"
     CONTAINER_NAME = 'campuskart-container'
     PORT = '3000'
   }
@@ -36,13 +36,14 @@ pipeline {
     stage('Copy Files to Deploy Folder') {
       steps {
         sh '''
-          mkdir -p "$DEPLOY_DIR/Frontend"
+          mkdir -p "$APP_DIR"
+
           rsync -av --delete \
             --exclude='.git' \
-			--exclude='.env.local' \
+            --exclude='.env.local' \
             --exclude='node_modules' \
             --exclude='.next' \
-            ./ "$DEPLOY_DIR/"
+            ./ "$APP_DIR/"
         '''
       }
     }
@@ -55,37 +56,18 @@ pipeline {
       }
     }
 
-    stage('Stop Old Container') {
+    stage('Deploy with Docker Compose') {
       steps {
         sh '''
-          docker stop $CONTAINER_NAME || true
-          docker rm $CONTAINER_NAME || true
+          set -e
+          cd "$APP_DIR"
+
+          docker compose down || true
+          docker compose build --no-cache
+          docker compose up -d
         '''
       }
     }
-
-    stage('Build Docker Image') {
-      steps {
-        sh '''
-          docker build -t $APP_NAME -f "$DEPLOY_DIR/Frontend/Dockerfile" "$DEPLOY_DIR/Frontend"
-        '''
-      }
-    }
-
-    stage('Run New Container') {
-  steps {
-    sh '''
-      docker rm -f $CONTAINER_NAME || true
-
-      docker run -d \
-        --restart unless-stopped \
-        --name $CONTAINER_NAME \
-        -p $PORT:$PORT \
-        --env-file "$DEPLOY_DIR/Frontend/.env.local" \
-        $APP_NAME
-    '''
-  }
-}
 
     stage('Wait for App') {
       steps {
