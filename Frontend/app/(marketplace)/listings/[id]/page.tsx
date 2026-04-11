@@ -4,27 +4,12 @@ import { z } from "zod";
 
 import ListingImageCarousel from "@/components/listings/ListingImageCarousel";
 import MessageSellerCta from "@/components/listings/MessageSellerCta";
-import type { Listing } from "@/lib/types/listing";
+import { fetchListingById } from "@/lib/fetch-listing-detail";
+import { getSession } from "@/lib/auth";
 
 const paramsSchema = z.object({
   id: z.string().uuid("Listing id must be a valid UUID."),
 });
-
-type ListingWithSeller = Listing & { seller: { id: string; name: string } };
-
-async function fetchListing(id: string): Promise<ListingWithSeller> {
-  const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
-  const res = await fetch(`${base}/api/listings/${encodeURIComponent(id)}`, {
-    cache: "no-store",
-  });
-
-  if (res.status === 404) notFound();
-  if (!res.ok) throw new Error(`Failed to fetch listing (${res.status}).`);
-
-  const data = (await res.json()) as { listing?: ListingWithSeller };
-  if (!data.listing) throw new Error("Malformed listing response.");
-  return data.listing;
-}
 
 interface ListingDetailPageProps {
   params: Promise<{ id: string }>;
@@ -38,20 +23,39 @@ export default async function ListingDetailPage({
   if (!parsed.success) notFound();
 
   const { id } = parsed.data;
-  const listing = await fetchListing(id);
+  const [listing, session] = await Promise.all([
+    fetchListingById(id),
+    getSession(),
+  ]);
 
-  const images = listing.thumbnail_url ? [listing.thumbnail_url] : [];
+  const images =
+    listing.photo_urls && listing.photo_urls.length > 0
+      ? listing.photo_urls
+      : listing.thumbnail_url
+        ? [listing.thumbnail_url]
+        : [];
+
+  // Edit is server-rendered only for the seller; no session or another user → no button in the DOM.
+  const isOwner = session != null && listing.seller_id === session.userId;
 
   return (
     <div className="min-h-screen bg-surface">
       <div className="max-w-screen-xl mx-auto px-4 py-6">
-        <div className="mb-4">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Link
             href="/listings"
             className="text-sm font-semibold text-primary hover:underline"
           >
             ← Back to listings
           </Link>
+          {isOwner ? (
+            <Link
+              href={`/listings/${id}/edit`}
+              className="inline-flex w-fit items-center justify-center rounded-button border border-primary bg-card px-4 py-2.5 text-sm font-semibold text-primary hover:bg-primary-light transition"
+            >
+              Edit
+            </Link>
+          ) : null}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">

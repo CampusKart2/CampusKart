@@ -10,6 +10,9 @@ import {
   createListingBodySchema,
   createListingDetailsSchema,
   createListingPhotosSchema,
+  updateListingBodySchema,
+  LISTING_STATUSES,
+  type ListingStatus,
 } from "@/lib/validators/listings";
 import {
   ArrowLeft,
@@ -55,14 +58,51 @@ function formatPrice(value: string): string {
   return `$${amount.toFixed(2)}`;
 }
 
-export default function CreateListingWizard() {
+/** Stringify a numeric DB price for controlled inputs (whole dollars stay clean). */
+function formatInitialPrice(value: number): string {
+  if (!Number.isFinite(value) || value < 0) {
+    return "";
+  }
+  return Number.isInteger(value) ? String(value) : value.toFixed(2);
+}
+
+export type CreateListingWizardProps = {
+  mode?: "create" | "edit";
+  listingId?: string;
+  initialData?: {
+    title: string;
+    description: string;
+    price: number;
+    condition: ListingCondition;
+    category: string;
+    photoUrls: string[];
+    status: ListingStatus;
+  };
+};
+
+export default function CreateListingWizard({
+  mode = "create",
+  listingId,
+  initialData,
+}: CreateListingWizardProps) {
   const [step, setStep] = useState(0);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
-  const [condition, setCondition] = useState<ListingCondition>("Good");
-  const [category, setCategory] = useState("");
-  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
+  const [title, setTitle] = useState(() => initialData?.title ?? "");
+  const [description, setDescription] = useState(
+    () => initialData?.description ?? ""
+  );
+  const [price, setPrice] = useState(() =>
+    initialData != null ? formatInitialPrice(initialData.price) : ""
+  );
+  const [condition, setCondition] = useState<ListingCondition>(
+    () => initialData?.condition ?? "Good"
+  );
+  const [category, setCategory] = useState(() => initialData?.category ?? "");
+  const [status, setStatus] = useState<ListingStatus>(
+    () => initialData?.status ?? "active"
+  );
+  const [photoUrls, setPhotoUrls] = useState<string[]>(
+    () => initialData?.photoUrls ?? []
+  );
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -106,11 +146,13 @@ export default function CreateListingWizard() {
     };
   }, []);
 
+  // Default category for *new* listings only — edits keep the slug from the server.
   useEffect(() => {
+    if (mode === "edit") return;
     if (!category && categories.length > 0) {
       setCategory(categories[0].slug);
     }
-  }, [categories, category]);
+  }, [categories, category, mode]);
 
   const zodErrorToFieldErrors = (error: ZodError): Record<string, string> => {
     const errors: Record<string, string> = {};
@@ -239,25 +281,88 @@ export default function CreateListingWizard() {
     setSubmitError("");
     setSuccessMessage("");
 
+    const photoUrlsClean = photoUrls.map((value) => value.trim()).filter(Boolean);
+
+    const applyValidationErrors = (errors: Record<string, string>) => {
+      setFieldErrors(errors);
+      setStep(
+        errors.title ||
+          errors.description ||
+          errors.price ||
+          errors.category ||
+          errors.condition ||
+          errors.status
+          ? 0
+          : 1
+      );
+    };
+
+    // ── Edit: PATCH with the same shape the API accepts (all fields sent together).
+    if (mode === "edit") {
+      if (!listingId) {
+        setSubmitError("Missing listing id.");
+        return;
+      }
+
+      const patchPayload = {
+        title: title.trim(),
+        description: description.trim(),
+        price,
+        condition,
+        category,
+        status,
+        photoUrls: photoUrlsClean,
+      };
+
+      const parsedPatch = updateListingBodySchema.safeParse(patchPayload);
+      if (!parsedPatch.success) {
+        applyValidationErrors(zodErrorToFieldErrors(parsedPatch.error));
+        return;
+      }
+
+      setIsSubmitting(true);
+      try {
+        const response = await fetch(
+          `/api/listings/${encodeURIComponent(listingId)}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(parsedPatch.data),
+          }
+        );
+
+        const body = (await response.json()) as { error?: string };
+        if (!response.ok) {
+          setSubmitError(
+            body?.error ?? "Unable to save your listing. Please try again."
+          );
+          return;
+        }
+
+        router.push(`/listings/${listingId}`);
+      } catch (error) {
+        console.error("[CreateListingWizard] PATCH error:", error);
+        setSubmitError("Unable to connect to the server. Please try again.");
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    // ── Create: POST
     const payload = {
       title: title.trim(),
       description: description.trim(),
       price,
       condition,
       category,
-      photoUrls: photoUrls.map((value) => value.trim()).filter(Boolean),
+      photoUrls: photoUrlsClean,
     };
 
     const parsed = createListingBodySchema.safeParse(payload);
 
     if (!parsed.success) {
-      const errors = zodErrorToFieldErrors(parsed.error);
-      setFieldErrors(errors);
-      setStep(
-        errors.title || errors.description || errors.price || errors.category || errors.condition
-          ? 0
-          : 1
-      );
+      applyValidationErrors(zodErrorToFieldErrors(parsed.error));
       return;
     }
 
@@ -301,9 +406,13 @@ export default function CreateListingWizard() {
     <div className="bg-card border border-border rounded-card shadow-card p-6 md:p-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between md:gap-6 mb-8">
         <div>
-          <p className="text-sm font-semibold text-primary">Create a listing</p>
+          <p className="text-sm font-semibold text-primary">
+            {mode === "edit" ? "Edit listing" : "Create a listing"}
+          </p>
           <h1 className="mt-2 text-2xl font-bold text-text-primary sm:text-3xl">
-            Post your item in three easy steps.
+            {mode === "edit"
+              ? "Update your listing in three easy steps."
+              : "Post your item in three easy steps."}
           </h1>
         </div>
         <div className="rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium text-text-secondary">
@@ -444,6 +553,31 @@ export default function CreateListingWizard() {
               ) : null}
             </label>
           </div>
+
+          {mode === "edit" ? (
+            <label className="block max-w-md">
+              <span className="text-sm font-medium text-text-primary">
+                Listing status
+              </span>
+              <select
+                value={status}
+                onChange={(event) =>
+                  setStatus(event.target.value as ListingStatus)
+                }
+                className="mt-2 w-full rounded-input border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                aria-invalid={Boolean(fieldErrors.status)}
+              >
+                {LISTING_STATUSES.map((option) => (
+                  <option key={option} value={option}>
+                    {option.charAt(0).toUpperCase() + option.slice(1)}
+                  </option>
+                ))}
+              </select>
+              {fieldErrors.status ? (
+                <p className="mt-2 text-sm text-rose-600">{fieldErrors.status}</p>
+              ) : null}
+            </label>
+          ) : null}
         </div>
       )}
 
@@ -566,6 +700,17 @@ export default function CreateListingWizard() {
               </div>
             </div>
 
+            {mode === "edit" ? (
+              <div className="mt-4">
+                <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-[0.12em]">
+                  Status
+                </h2>
+                <p className="mt-2 text-base text-text-primary">
+                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                </p>
+              </div>
+            ) : null}
+
             <div className="mt-6">
               <h2 className="text-sm font-semibold text-text-secondary uppercase tracking-[0.12em]">
                 Description
@@ -601,7 +746,9 @@ export default function CreateListingWizard() {
           </div>
 
           <div className="rounded-card border border-border bg-surface p-4 text-sm text-text-secondary">
-            Your listing will be published immediately after you click Publish.
+            {mode === "edit"
+              ? "Your changes are saved when you click Save changes."
+              : "Your listing will be published immediately after you click Publish."}
           </div>
         </div>
       )}
@@ -634,7 +781,7 @@ export default function CreateListingWizard() {
               disabled={isSubmitting}
               className="inline-flex items-center justify-center gap-2 rounded-button bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark transition disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Publish listing
+              {mode === "edit" ? "Save changes" : "Publish listing"}
               <ArrowRight size={16} />
             </button>
           )}

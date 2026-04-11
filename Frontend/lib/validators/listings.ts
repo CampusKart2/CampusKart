@@ -128,6 +128,68 @@ export const createListingPhotosSchema = createListingBodySchema.pick({
 
 export type CreateListingBodyInput = z.infer<typeof createListingBodySchema>;
 
+/** Valid status values for the listings.status column. */
+export const LISTING_STATUSES = ["active", "inactive", "sold"] as const;
+export type ListingStatus = (typeof LISTING_STATUSES)[number];
+
+/**
+ * Body validation for PATCH /api/listings/:id.
+ *
+ * Every field is optional to support partial updates, but at least one field
+ * must be present — an empty body is rejected with 400.
+ */
+export const updateListingBodySchema = z
+  .object({
+    title: z
+      .string()
+      .trim()
+      .min(5, "Title must be at least 5 characters.")
+      .max(120, "Title must be at most 120 characters.")
+      .optional(),
+    description: z
+      .string()
+      .trim()
+      .min(10, "Description must be at least 10 characters.")
+      .max(1500, "Description must be at most 1500 characters.")
+      .optional(),
+    price: z
+      .preprocess(
+        (value) => (typeof value === "string" ? Number(value) : value),
+        z
+          .number({ message: "Price must be a number." })
+          .min(0, "Price must be at least 0.")
+      )
+      .optional(),
+    condition: z
+      .enum(LISTING_CONDITIONS, {
+        error: "Condition must be one of: New, Like New, Good, Fair, Poor.",
+      })
+      .optional(),
+    category: z
+      .string()
+      .trim()
+      .min(1, "Category is required.")
+      .max(64, "Category must be at most 64 characters.")
+      .transform((value) => value.toLowerCase())
+      .optional(),
+    status: z
+      .enum(LISTING_STATUSES, {
+        error: "Status must be one of: active, inactive, sold.",
+      })
+      .optional(),
+    photoUrls: z
+      .array(z.string().trim().url("Each photo URL must be valid."))
+      .min(1, "Add at least one photo URL.")
+      .max(5, "Please provide at most 5 photos.")
+      .optional(),
+  })
+  .refine(
+    (data) => Object.values(data).some((v) => v !== undefined),
+    { message: "At least one field must be provided." }
+  );
+
+export type UpdateListingBodyInput = z.infer<typeof updateListingBodySchema>;
+
 /**
  * Querystring validation for GET /api/listings/nearby.
  *
