@@ -1,3 +1,7 @@
+import type { ListingStatus } from "@/lib/validators/listings";
+
+export type { ListingStatus };
+
 export type Listing = {
   id: string;
   title: string;
@@ -9,6 +13,10 @@ export type Listing = {
   seller_id: string;
   created_at: string;
   view_count: number;
+  /** Present on GET /api/listings/:id — ordered by `listing_photos.position`. */
+  photo_urls?: string[];
+  /** Present on GET /api/listings/:id when the column exists. */
+  status?: ListingStatus;
 };
 
 export type NearbyListing = Listing & {
