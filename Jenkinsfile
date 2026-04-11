@@ -57,6 +57,17 @@ pipeline {
       }
     }
 
+    stage('Clean Docker Cache') {
+      steps {
+        sh '''
+          docker system df || true
+          docker builder prune -af || true
+          docker image prune -af || true
+          docker system df || true
+        '''
+      }
+    }
+
     stage('Deploy with Docker Compose') {
       steps {
         sh '''
