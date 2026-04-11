@@ -109,6 +109,9 @@ export default function CreateListingWizard({
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadingFileName, setUploadingFileName] = useState("");
+  const [uploadingFileCount, setUploadingFileCount] = useState(0);
   const [uploadError, setUploadError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -231,6 +234,9 @@ export default function CreateListingWizard({
     const remainingSlots = MAX_PHOTOS - photoUrls.length;
 
     setUploadError("");
+    setUploadProgress(0);
+    setUploadingFileName("");
+    setUploadingFileCount(0);
 
     if (selectedFiles.length === 0) {
       return;
@@ -242,21 +248,29 @@ export default function CreateListingWizard({
     }
 
     setIsUploading(true);
+    setUploadingFileCount(selectedFiles.length);
 
     try {
       const uploadedFiles = await uploader.uploadFiles("photo", {
         files: selectedFiles,
+        onUploadProgress: ({ file, totalProgress }) => {
+          setUploadingFileName(file.name);
+          setUploadProgress(totalProgress);
+        },
       });
 
       setPhotoUrls((current) => [
         ...current,
         ...uploadedFiles.map((file) => file.url),
       ]);
+      setUploadProgress(100);
     } catch (error) {
       console.error("[CreateListingWizard] upload error:", error);
       setUploadError("Unable to upload photos. Please try again.");
     } finally {
       setIsUploading(false);
+      setUploadingFileName("");
+      setUploadingFileCount(0);
     }
   };
 
@@ -624,6 +638,27 @@ export default function CreateListingWizard({
 
             {uploadError ? (
               <p className="mt-3 text-sm text-rose-600">{uploadError}</p>
+            ) : null}
+            {isUploading ? (
+              <div className="mt-4 rounded-card border border-border bg-surface p-3">
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <p className="font-medium text-text-primary">
+                    Uploading {uploadingFileCount} image{uploadingFileCount === 1 ? "" : "s"}...
+                  </p>
+                  <span className="text-text-secondary">{uploadProgress}%</span>
+                </div>
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-border/70">
+                  <div
+                    className="h-full rounded-full bg-primary transition-[width] duration-200 ease-out"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-sm text-text-secondary">
+                  {uploadingFileName
+                    ? `Current file: ${uploadingFileName}`
+                    : "Preparing upload..."}
+                </p>
+              </div>
             ) : null}
             {fieldErrors.photoUrls ? (
               <p className="mt-3 text-sm text-rose-600">{fieldErrors.photoUrls}</p>
