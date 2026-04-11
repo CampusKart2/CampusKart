@@ -171,7 +171,16 @@ pipeline {
   post {
     always {
       script {
-        notifySlack(currentBuild.currentResult, '#jenkins')
+        def targetNode = 'dev'
+        if (env.BRANCH_NAME == 'QA') {
+          targetNode = 'qa'
+        } else if (env.BRANCH_NAME == 'main') {
+          targetNode = 'dev'
+        }
+
+        node(targetNode) {
+          notifySlack(currentBuild.currentResult, '#jenkins')
+        }
       }
     }
   }
