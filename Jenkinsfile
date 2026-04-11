@@ -16,6 +16,7 @@ pipeline {
     APP_DIR = "${env.HOME}/CampusKart/Frontend"
     CONTAINER_NAME = 'campuskart-container'
     PORT = '3000'
+    COMPOSE_FILE = "${env.HOME}/CampusKart/Frontend/docker-compose.yml"
   }
 
   stages {
@@ -43,7 +44,7 @@ pipeline {
             --exclude='.env.local' \
             --exclude='node_modules' \
             --exclude='.next' \
-            ./ "$APP_DIR/"
+            ./Frontend/ "$APP_DIR/"
         '''
       }
     }
@@ -51,7 +52,7 @@ pipeline {
     stage('Stop Host Process on 3000') {
       steps {
         sh '''
-          fuser -k 3000/tcp || true
+          fuser -k "$PORT"/tcp || true
         '''
       }
     }
@@ -62,9 +63,15 @@ pipeline {
           set -e
           cd "$APP_DIR"
 
-          docker compose down || true
-          docker compose build --no-cache
-          docker compose up -d
+          if [ ! -f "$COMPOSE_FILE" ]; then
+            echo "docker-compose file not found at $COMPOSE_FILE"
+            ls -la "$APP_DIR"
+            exit 1
+          fi
+
+          docker compose -f "$COMPOSE_FILE" down || true
+          docker compose -f "$COMPOSE_FILE" build --no-cache
+          docker compose -f "$COMPOSE_FILE" up -d
         '''
       }
     }
