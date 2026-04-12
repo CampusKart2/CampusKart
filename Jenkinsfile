@@ -87,10 +87,10 @@ pipeline {
 
               stage('Clean Docker Cache') {
                 sh '''
-                  docker system df || true
-                  docker builder prune -af || true
-                  docker image prune -af || true
-                  docker system df || true
+                  sudo docker system df || true
+                  sudo docker builder prune -af || true
+                  sudo docker image prune -af || true
+                  sudo docker system df || true
                 '''
               }
 
@@ -105,9 +105,9 @@ pipeline {
                     exit 1
                   fi
 
-                  docker compose -f "$COMPOSE_FILE" down || true
-                  docker compose -f "$COMPOSE_FILE" build --no-cache
-                  docker compose -f "$COMPOSE_FILE" up -d
+                  sudo docker compose -f "$COMPOSE_FILE" down || true
+                  sudo docker compose -f "$COMPOSE_FILE" build --no-cache
+                  sudo docker compose -f "$COMPOSE_FILE" up -d
                 '''
               }
 
