@@ -52,16 +52,16 @@ pipeline {
               }
 			  
 			  stage('Debug Docker Access') {
-				steps {
-						sh '''
-							whoami
-							id
-							groups
-							ls -l /var/run/docker.sock
-							docker version
-							docker ps
-						'''
-  }
+				  steps {
+					sh '''
+					  whoami
+					  id
+					  groups
+					  ls -l /var/run/docker.sock
+					  docker version
+					  docker ps
+					'''
+				  }
 }
 
               stage('Stop Host Process on 3000') {
