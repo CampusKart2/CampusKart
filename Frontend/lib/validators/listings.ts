@@ -11,6 +11,89 @@ export const LISTING_CONDITIONS = [
 
 export type ListingCondition = (typeof LISTING_CONDITIONS)[number];
 
+function parseCurrencyInput(value: unknown): unknown {
+  if (typeof value === "number") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const normalized = value.trim().replace(/^\$/, "").replace(/,/g, "");
+    return normalized.length > 0 ? Number(normalized) : Number.NaN;
+  }
+
+  return value;
+}
+
+function roundCurrency(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
+}
+
+const currencySchema = z
+  .preprocess(
+    parseCurrencyInput,
+    z
+      .number({ message: "Price must be a number." })
+      .finite("Price must be a number.")
+      .min(0, "Price must be at least 0.")
+  )
+  .transform(roundCurrency);
+
+const createListingBodyShape = {
+  title: z
+    .string()
+    .trim()
+    .min(5, "Title must be at least 5 characters.")
+    .max(120, "Title must be at most 120 characters."),
+  description: z
+    .string()
+    .trim()
+    .min(10, "Description must be at least 10 characters.")
+    .max(1500, "Description must be at most 1500 characters."),
+  price: currencySchema,
+  isFree: z.boolean().default(false),
+  condition: z.enum(LISTING_CONDITIONS, {
+    error: "Condition must be one of: New, Like New, Good, Fair, Poor.",
+  }),
+  category: z
+    .string()
+    .trim()
+    .min(1, "Category is required.")
+    .max(64, "Category must be at most 64 characters.")
+    .transform((value) => value.toLowerCase()),
+  photoUrls: z
+    .array(z.string().trim().url("Each photo URL must be valid."))
+    .min(1, "Add at least one photo URL.")
+    .max(5, "Please provide at most 5 photos."),
+} satisfies z.ZodRawShape;
+
+const createListingBodyBaseSchema = z.object(createListingBodyShape);
+
+function applyCreateListingPriceRules<
+  T extends {
+    price: number;
+    isFree: boolean;
+  },
+>(data: T, ctx: z.RefinementCtx): void {
+  if (data.isFree) {
+    if (data.price !== 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["price"],
+        message: "Free listings must have a price of 0.",
+      });
+    }
+    return;
+  }
+
+  if (data.price <= 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["price"],
+      message: "Price must be greater than 0.",
+    });
+  }
+}
+
 /**
  * Querystring validation for GET /api/listings.
  *
@@ -82,47 +165,22 @@ export const listingsQuerySchema = z
 
 export type ListingsQueryInput = z.infer<typeof listingsQuerySchema>;
 
-export const createListingBodySchema = z.object({
-  title: z
-    .string()
-    .trim()
-    .min(5, "Title must be at least 5 characters.")
-    .max(120, "Title must be at most 120 characters."),
-  description: z
-    .string()
-    .trim()
-    .min(10, "Description must be at least 10 characters.")
-    .max(1500, "Description must be at most 1500 characters."),
-  price: z.preprocess(
-    (value) => (typeof value === "string" ? Number(value) : value),
-    z
-      .number({ message: "Price must be a number." })
-      .min(0, "Price must be at least 0.")
-  ),
-  condition: z.enum(LISTING_CONDITIONS, {
-    error: "Condition must be one of: New, Like New, Good, Fair, Poor.",
-  }),
-  category: z
-    .string()
-    .trim()
-    .min(1, "Category is required.")
-    .max(64, "Category must be at most 64 characters.")
-    .transform((value) => value.toLowerCase()),
-  photoUrls: z
-    .array(z.string().trim().url("Each photo URL must be valid."))
-    .min(1, "Add at least one photo URL.")
-    .max(5, "Please provide at most 5 photos."),
-});
+export const createListingBodySchema = createListingBodyBaseSchema.superRefine(
+  applyCreateListingPriceRules
+);
 
-export const createListingDetailsSchema = createListingBodySchema.pick({
-  title: true,
-  description: true,
-  price: true,
-  condition: true,
-  category: true,
-});
+export const createListingDetailsSchema = createListingBodyBaseSchema
+  .pick({
+    title: true,
+    description: true,
+    price: true,
+    isFree: true,
+    condition: true,
+    category: true,
+  })
+  .superRefine(applyCreateListingPriceRules);
 
-export const createListingPhotosSchema = createListingBodySchema.pick({
+export const createListingPhotosSchema = createListingBodyBaseSchema.pick({
   photoUrls: true,
 });
 
@@ -132,61 +190,83 @@ export type CreateListingBodyInput = z.infer<typeof createListingBodySchema>;
 export const LISTING_STATUSES = ["active", "inactive", "sold"] as const;
 export type ListingStatus = (typeof LISTING_STATUSES)[number];
 
+const updateListingBodyShape = {
+  title: z
+    .string()
+    .trim()
+    .min(5, "Title must be at least 5 characters.")
+    .max(120, "Title must be at most 120 characters.")
+    .optional(),
+  description: z
+    .string()
+    .trim()
+    .min(10, "Description must be at least 10 characters.")
+    .max(1500, "Description must be at most 1500 characters.")
+    .optional(),
+  price: currencySchema.optional(),
+  isFree: z.boolean().optional(),
+  condition: z
+    .enum(LISTING_CONDITIONS, {
+      error: "Condition must be one of: New, Like New, Good, Fair, Poor.",
+    })
+    .optional(),
+  category: z
+    .string()
+    .trim()
+    .min(1, "Category is required.")
+    .max(64, "Category must be at most 64 characters.")
+    .transform((value) => value.toLowerCase())
+    .optional(),
+  status: z
+    .enum(LISTING_STATUSES, {
+      error: "Status must be one of: active, inactive, sold.",
+    })
+    .optional(),
+  photoUrls: z
+    .array(z.string().trim().url("Each photo URL must be valid."))
+    .min(1, "Add at least one photo URL.")
+    .max(5, "Please provide at most 5 photos.")
+    .optional(),
+} satisfies z.ZodRawShape;
+
+const updateListingBodyBaseSchema = z.object(updateListingBodyShape);
+
 /**
  * Body validation for PATCH /api/listings/:id.
  *
  * Every field is optional to support partial updates, but at least one field
  * must be present — an empty body is rejected with 400.
  */
-export const updateListingBodySchema = z
-  .object({
-    title: z
-      .string()
-      .trim()
-      .min(5, "Title must be at least 5 characters.")
-      .max(120, "Title must be at most 120 characters.")
-      .optional(),
-    description: z
-      .string()
-      .trim()
-      .min(10, "Description must be at least 10 characters.")
-      .max(1500, "Description must be at most 1500 characters.")
-      .optional(),
-    price: z
-      .preprocess(
-        (value) => (typeof value === "string" ? Number(value) : value),
-        z
-          .number({ message: "Price must be a number." })
-          .min(0, "Price must be at least 0.")
-      )
-      .optional(),
-    condition: z
-      .enum(LISTING_CONDITIONS, {
-        error: "Condition must be one of: New, Like New, Good, Fair, Poor.",
-      })
-      .optional(),
-    category: z
-      .string()
-      .trim()
-      .min(1, "Category is required.")
-      .max(64, "Category must be at most 64 characters.")
-      .transform((value) => value.toLowerCase())
-      .optional(),
-    status: z
-      .enum(LISTING_STATUSES, {
-        error: "Status must be one of: active, inactive, sold.",
-      })
-      .optional(),
-    photoUrls: z
-      .array(z.string().trim().url("Each photo URL must be valid."))
-      .min(1, "Add at least one photo URL.")
-      .max(5, "Please provide at most 5 photos.")
-      .optional(),
-  })
-  .refine(
-    (data) => Object.values(data).some((v) => v !== undefined),
-    { message: "At least one field must be provided." }
-  );
+export const updateListingBodySchema = updateListingBodyBaseSchema.superRefine(
+  (data, ctx) => {
+    if (!Object.values(data).some((v) => v !== undefined)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "At least one field must be provided.",
+      });
+      return;
+    }
+
+    if (data.isFree === true) {
+      if (data.price !== 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["price"],
+          message: "Free listings must have a price of 0.",
+        });
+      }
+      return;
+    }
+
+    if (data.isFree === false && data.price !== undefined && data.price <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["price"],
+        message: "Price must be greater than 0.",
+      });
+    }
+  }
+);
 
 export type UpdateListingBodyInput = z.infer<typeof updateListingBodySchema>;
 

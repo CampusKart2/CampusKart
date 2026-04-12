@@ -71,17 +71,57 @@ function isValidUrl(value: string): boolean {
 function formatPrice(value: string): string {
   const amount = Number(value);
   if (!Number.isFinite(amount) || amount < 0) {
-    return "$0.00";
+    return "-";
+  }
+  if (amount === 0) {
+    return "Free";
   }
   return `$${amount.toFixed(2)}`;
 }
 
 /** Stringify a numeric DB price for controlled inputs (whole dollars stay clean). */
 function formatInitialPrice(value: number): string {
-  if (!Number.isFinite(value) || value < 0) {
+  if (!Number.isFinite(value) || value <= 0) {
     return "";
   }
   return Number.isInteger(value) ? String(value) : value.toFixed(2);
+}
+
+function normalizePriceInput(value: string): string {
+  let normalized = "";
+  let sawDecimal = false;
+
+  for (const character of value.trim()) {
+    if (character >= "0" && character <= "9") {
+      normalized += character;
+      continue;
+    }
+
+    if (character === "." && !sawDecimal) {
+      normalized += character;
+      sawDecimal = true;
+      continue;
+    }
+
+    if (character === "-" && normalized.length === 0) {
+      normalized += character;
+    }
+  }
+
+  return normalized;
+}
+
+function roundPriceInput(value: string): string {
+  if (value === "" || value === "-" || value === "." || value === "-.") {
+    return "";
+  }
+
+  const amount = Number(value);
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return value;
+  }
+
+  return amount.toFixed(2);
 }
 
 function createPhotoId(): string {
@@ -149,6 +189,7 @@ export default function CreateListingWizard({
   const [price, setPrice] = useState(() =>
     initialData != null ? formatInitialPrice(initialData.price) : ""
   );
+  const [isFree, setIsFree] = useState(() => initialData?.price === 0);
   const [condition, setCondition] = useState<ListingCondition>(
     () => initialData?.condition ?? "Good"
   );
@@ -275,7 +316,8 @@ export default function CreateListingWizard({
     const parsed = createListingDetailsSchema.safeParse({
       title: title.trim(),
       description: description.trim(),
-      price,
+      price: isFree ? 0 : price,
+      isFree,
       condition,
       category,
     });
@@ -454,6 +496,40 @@ export default function CreateListingWizard({
     event.target.value = "";
   };
 
+  const handlePriceChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const nextPrice = normalizePriceInput(event.target.value);
+    setPrice(nextPrice);
+
+    setFieldErrors((current) => {
+      if (!current.price) {
+        return current;
+      }
+
+      const next = { ...current };
+      delete next.price;
+      return next;
+    });
+  };
+
+  const handlePriceBlur = () => {
+    setPrice((current) => roundPriceInput(current));
+  };
+
+  const handleFreeToggleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const nextIsFree = event.target.checked;
+    setIsFree(nextIsFree);
+
+    if (nextIsFree) {
+      setPrice("");
+    }
+
+    setFieldErrors((current) => {
+      const next = { ...current };
+      delete next.price;
+      return next;
+    });
+  };
+
   const handlePhotoDragOver = (event: DragEvent<HTMLLabelElement>) => {
     event.preventDefault();
     event.stopPropagation();
@@ -518,7 +594,8 @@ export default function CreateListingWizard({
       const patchPayload = {
         title: title.trim(),
         description: description.trim(),
-        price,
+        price: isFree ? 0 : price,
+        isFree,
         condition,
         category,
         status,
@@ -564,7 +641,8 @@ export default function CreateListingWizard({
     const payload = {
       title: title.trim(),
       description: description.trim(),
-      price,
+      price: isFree ? 0 : price,
+      isFree,
       condition,
       category,
       photoUrls: photoUrlsClean,
@@ -694,19 +772,59 @@ export default function CreateListingWizard({
 
             <label className="block">
               <span className="text-sm font-medium text-text-primary">Price</span>
-              <div className="mt-2 flex items-center gap-2 rounded-input border border-border bg-surface px-3 py-2">
-                <span className="text-sm text-text-secondary">$</span>
-                <input
-                  value={price}
-                  onChange={(event) => setPrice(event.target.value)}
-                  className="w-full bg-transparent text-sm text-text-primary placeholder:text-text-muted focus:outline-none"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  aria-invalid={Boolean(fieldErrors.price)}
-                />
-              </div>
+              <label className="mt-2 flex items-center justify-between rounded-card border border-border bg-surface px-4 py-3">
+                <div>
+                  <p className="text-sm font-semibold text-text-primary">
+                    Mark item as free
+                  </p>
+                  <p className="text-xs text-text-secondary">
+                    Free listings hide the price field and publish as $0.00.
+                  </p>
+                </div>
+                <span
+                  className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition ${
+                    isFree ? "bg-primary" : "bg-border"
+                  }`}
+                >
+                  <input
+                    checked={isFree}
+                    onChange={handleFreeToggleChange}
+                    type="checkbox"
+                    className="peer sr-only"
+                    aria-label="Mark listing as free"
+                  />
+                  <span
+                    className={`absolute left-1 h-5 w-5 rounded-full bg-white shadow-sm transition ${
+                      isFree ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </span>
+              </label>
+              {!isFree ? (
+                <div
+                  className={`mt-3 flex items-center gap-2 rounded-input border bg-surface px-3 py-2 ${
+                    fieldErrors.price
+                      ? "border-rose-300 focus-within:ring-rose-200"
+                      : "border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/30"
+                  }`}
+                >
+                  <span className="text-sm text-text-secondary">$</span>
+                  <input
+                    value={price}
+                    onChange={handlePriceChange}
+                    onBlur={handlePriceBlur}
+                    className="w-full bg-transparent text-sm text-text-primary placeholder:text-text-muted focus:outline-none"
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="0.00"
+                    aria-invalid={Boolean(fieldErrors.price)}
+                  />
+                </div>
+              ) : (
+                <div className="mt-3 rounded-input border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800">
+                  This listing will be shown as Free.
+                </div>
+              )}
               {fieldErrors.price ? (
                 <p className="mt-2 text-sm text-rose-600">{fieldErrors.price}</p>
               ) : null}
@@ -1006,7 +1124,7 @@ export default function CreateListingWizard({
                     Price
                   </h2>
                   <p className="mt-2 text-base font-semibold text-text-primary">
-                    {formatPrice(price)}
+                    {formatPrice(isFree ? "0" : price)}
                   </p>
                 </div>
               </div>

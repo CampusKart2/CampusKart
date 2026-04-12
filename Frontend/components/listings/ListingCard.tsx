@@ -63,14 +63,15 @@ export default function ListingCard({ listing }: ListingCardProps) {
       {/* Content */}
       <div className="p-2">
         {/* Price */}
-        <p
-          className={[
-            "text-base font-bold leading-tight",
-            price === 0 ? "text-success" : "text-text-primary",
-          ].join(" ")}
-        >
-          {price === 0 ? "Free" : `$${price.toFixed(2)}`}
-        </p>
+        {price === 0 ? (
+          <div className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold uppercase tracking-[0.12em] text-emerald-800">
+            Free
+          </div>
+        ) : (
+          <p className="text-base font-bold leading-tight text-text-primary">
+            ${price.toFixed(2)}
+          </p>
+        )}
 
         {/* Title — 2-line clamp */}
         <p className="mt-0.5 text-sm font-semibold text-text-primary line-clamp-2 leading-snug">
