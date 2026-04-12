@@ -123,10 +123,13 @@ CREATE TABLE listing_photos (
   listing_id  UUID        NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
   url         TEXT        NOT NULL,
   position    SMALLINT    NOT NULL DEFAULT 0,   -- 0 = thumbnail
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT chk_listing_photos_position_nonnegative CHECK (position >= 0),
+  CONSTRAINT uq_listing_photos_listing_position UNIQUE (listing_id, position)
 );
 
 CREATE INDEX idx_listing_photos_listing_id ON listing_photos(listing_id);
+CREATE INDEX idx_listing_photos_listing_position ON listing_photos(listing_id, position);
 
 -- ============================================================
 -- 7. AUTO-UPDATE updated_at ON ALL TABLES
