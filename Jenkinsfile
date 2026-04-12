@@ -15,20 +15,26 @@ pipeline {
     stage('Run Pipeline') {
       steps {
         script {
-          def targetNode = 'dev'
+          def targetNode = ''
+          def deployDir = ''
+
           if (env.BRANCH_NAME == 'QA') {
-            targetNode = 'qa'
+            targetNode = 'QA'
+            deployDir = '/home/jenkins/CampusKart'
           } else if (env.BRANCH_NAME == 'main') {
             targetNode = 'dev'
+            deployDir = '/home/jenkins/CampusKart'
+          } else {
+            error("Unsupported branch for deployment: ${env.BRANCH_NAME}")
           }
 
           node(targetNode) {
             withEnv([
-              "DEPLOY_DIR=${env.HOME}/CampusKart",
-              "APP_DIR=${env.HOME}/CampusKart/Frontend",
+              "DEPLOY_DIR=${deployDir}",
+              "APP_DIR=${deployDir}/Frontend",
               "CONTAINER_NAME=campuskart-container",
               "PORT=3000",
-              "COMPOSE_FILE=${env.HOME}/CampusKart/Frontend/docker-compose.yml",
+              "COMPOSE_FILE=${deployDir}/Frontend/docker-compose.yml",
             ]) {
               stage('Checkout') {
                 checkout scm
@@ -50,34 +56,44 @@ pipeline {
                     ./Frontend/ "$APP_DIR/"
                 '''
               }
-			  
-			  stage('Debug Docker Access') {
-				  sh '''
-					echo "USER:"
-					whoami
 
-					echo "ID:"
-					id
+              stage('Debug Docker Access') {
+                sh '''
+                  echo "NODE NAME: $NODE_NAME"
+                  echo "USER:"
+                  whoami
 
-					echo "GROUPS:"
-					groups
+                  echo "ID:"
+                  id
 
-					echo "DOCKER SOCK:"
-					ls -l /var/run/docker.sock || true
+                  echo "GROUPS:"
+                  groups
 
-					echo "DOCKER PATH:"
-					which docker || true
+                  echo "HOME:"
+                  echo "$HOME"
 
-					echo "DOCKER VERSION:"
-					docker version || true
+                  echo "APP_DIR:"
+                  echo "$APP_DIR"
 
-					echo "DOCKER PS:"
-					docker ps || true
+                  echo "DOCKER SOCK:"
+                  ls -l /var/run/docker.sock || true
 
-					echo "DOCKER COMPOSE VERSION:"
-					docker compose version || true
-				  '''
-				}
+                  echo "DOCKER PATH:"
+                  which docker || true
+
+                  echo "DOCKER VERSION:"
+                  docker version || true
+
+                  echo "DOCKER PS:"
+                  docker ps || true
+
+                  echo "DOCKER COMPOSE VERSION:"
+                  docker compose version || true
+
+                  echo "ENV FILE:"
+                  ls -la "$APP_DIR/.env.local" || true
+                '''
+              }
 
               stage('Stop Host Process on 3000') {
                 sh '''
@@ -199,10 +215,12 @@ pipeline {
   post {
     always {
       script {
-        def targetNode = 'dev'
+        def targetNode = ''
         if (env.BRANCH_NAME == 'QA') {
-          targetNode = 'qa'
+          targetNode = 'QA'
         } else if (env.BRANCH_NAME == 'main') {
+          targetNode = 'dev'
+        } else {
           targetNode = 'dev'
         }
 
@@ -212,4 +230,3 @@ pipeline {
       }
     }
   }
-}
