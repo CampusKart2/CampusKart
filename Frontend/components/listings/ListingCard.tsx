@@ -1,14 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { Listing, NearbyListing } from "@/lib/types/listing";
-
-const CONDITION_CLASSES: Record<Listing["condition"], string> = {
-  New: "bg-badge-new text-white",
-  "Like New": "bg-badge-likenew text-white",
-  Good: "bg-badge-good text-white",
-  Fair: "bg-badge-fair text-white",
-  Poor: "bg-badge-poor text-white",
-};
+import ConditionBadge from "@/components/listings/ConditionBadge";
 
 interface ListingCardProps {
   listing: Listing | NearbyListing;
@@ -80,14 +73,7 @@ export default function ListingCard({ listing }: ListingCardProps) {
 
         {/* Bottom row: condition badge + category */}
         <div className="mt-1.5 flex items-center justify-between gap-2">
-          <span
-            className={[
-              "inline-block text-xs font-semibold px-1.5 py-0.5 rounded-badge",
-              CONDITION_CLASSES[condition],
-            ].join(" ")}
-          >
-            {condition}
-          </span>
+          <ConditionBadge condition={condition} size="sm" />
           <span className="text-xs text-text-muted truncate">{category}</span>
         </div>
       </div>
