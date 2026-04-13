@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import ListingImageCarousel from "@/components/listings/ListingImageCarousel";
 import MessageSellerCta from "@/components/listings/MessageSellerCta";
+import ConditionBadge from "@/components/listings/ConditionBadge";
 import { fetchListingById } from "@/lib/fetch-listing-detail";
 import { getSession } from "@/lib/auth";
 
@@ -88,8 +89,8 @@ export default async function ListingDetailPage({
                 <div className="text-xs font-semibold text-text-muted">
                   Condition
                 </div>
-                <div className="mt-0.5 text-sm font-semibold text-text-primary">
-                  {listing.condition}
+                <div className="mt-1.5">
+                  <ConditionBadge condition={listing.condition} size="md" />
                 </div>
               </div>
               <div className="rounded-card border border-border bg-surface p-3">
