@@ -28,6 +28,7 @@ import {
   ImageIcon,
   Plus,
 } from "lucide-react";
+import ConditionSelector from "@/components/listings/ConditionSelector";
 
 const LISTING_CONDITIONS = [
   "New",
@@ -849,62 +850,41 @@ export default function CreateListingWizard({
             ) : null}
           </label>
 
-          <div className="grid gap-6 md:grid-cols-2">
-            <label className="block">
-              <span className="text-sm font-medium text-text-primary">
-                Condition
-              </span>
-              <select
-                value={condition}
-                onChange={(event) =>
-                  setCondition(event.target.value as ListingCondition)
-                }
-                className="mt-2 w-full rounded-input border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-                aria-invalid={Boolean(fieldErrors.condition)}
-              >
-                {LISTING_CONDITIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-              {fieldErrors.condition ? (
-                <p className="mt-2 text-sm text-rose-600">
-                  {fieldErrors.condition}
-                </p>
-              ) : null}
-            </label>
+          <ConditionSelector
+            value={condition}
+            onChange={setCondition}
+            error={fieldErrors.condition}
+          />
 
-            <label className="block">
-              <span className="text-sm font-medium text-text-primary">
-                Category
-              </span>
-              <div className="relative mt-2">
-                <select
-                  value={category}
-                  onChange={(event) => setCategory(event.target.value)}
-                  className="w-full rounded-input border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  disabled={isLoadingCategories}
-                  aria-invalid={Boolean(fieldErrors.category)}
-                >
-                  {isLoadingCategories ? (
-                    <option>Loading categories...</option>
-                  ) : categories.length > 0 ? (
-                    categories.map((categoryItem) => (
-                      <option key={categoryItem.slug} value={categoryItem.slug}>
-                        {categoryItem.name}
-                      </option>
-                    ))
-                  ) : (
-                    <option value="">No categories available</option>
-                  )}
-                </select>
-              </div>
-              {fieldErrors.category ? (
-                <p className="mt-2 text-sm text-rose-600">{fieldErrors.category}</p>
-              ) : null}
-            </label>
-          </div>
+          <label className="block max-w-xs">
+            <span className="text-sm font-medium text-text-primary">
+              Category
+            </span>
+            <div className="relative mt-2">
+              <select
+                value={category}
+                onChange={(event) => setCategory(event.target.value)}
+                className="w-full rounded-input border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+                disabled={isLoadingCategories}
+                aria-invalid={Boolean(fieldErrors.category)}
+              >
+                {isLoadingCategories ? (
+                  <option>Loading categories...</option>
+                ) : categories.length > 0 ? (
+                  categories.map((categoryItem) => (
+                    <option key={categoryItem.slug} value={categoryItem.slug}>
+                      {categoryItem.name}
+                    </option>
+                  ))
+                ) : (
+                  <option value="">No categories available</option>
+                )}
+              </select>
+            </div>
+            {fieldErrors.category ? (
+              <p className="mt-2 text-sm text-rose-600">{fieldErrors.category}</p>
+            ) : null}
+          </label>
 
           {mode === "edit" ? (
             <label className="block max-w-md">
