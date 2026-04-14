@@ -5,6 +5,7 @@ import { z } from "zod";
 import ListingImageCarousel from "@/components/listings/ListingImageCarousel";
 import MessageSellerCta from "@/components/listings/MessageSellerCta";
 import ConditionBadge from "@/components/listings/ConditionBadge";
+import MarkAsSoldButton from "@/components/listings/MarkAsSoldButton";
 import { fetchListingById } from "@/lib/fetch-listing-detail";
 import { getSession } from "@/lib/auth";
 
@@ -50,18 +51,28 @@ export default async function ListingDetailPage({
             ← Back to listings
           </Link>
           {isOwner ? (
-            <Link
-              href={`/listings/${id}/edit`}
-              className="inline-flex w-fit items-center justify-center rounded-button border border-primary bg-card px-4 py-2.5 text-sm font-semibold text-primary hover:bg-primary-light transition"
-            >
-              Edit
-            </Link>
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+              <Link
+                href={`/listings/${id}/edit`}
+                className="inline-flex w-full items-center justify-center rounded-button border border-primary bg-card px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary-light sm:w-fit"
+              >
+                Edit
+              </Link>
+              <MarkAsSoldButton
+                listingId={id}
+                initialStatus={listing.status}
+              />
+            </div>
           ) : null}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           {/* Images */}
-          <ListingImageCarousel images={images} title={listing.title} />
+          <ListingImageCarousel
+            images={images}
+            title={listing.title}
+            isSold={listing.status === "sold"}
+          />
 
           {/* Details */}
           <div className="bg-card border border-border rounded-card shadow-card p-4 sm:p-6">

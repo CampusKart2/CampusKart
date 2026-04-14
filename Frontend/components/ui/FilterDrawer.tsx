@@ -12,11 +12,13 @@ export interface FilterDrawerProps {
   priceMin: number | null;
   priceMax: number | null;
   condition: ListingCondition | null;
+  includeSold: boolean;
   onApply: (filters: {
     category: string | null;
     priceMin: number | null;
     priceMax: number | null;
     condition: ListingCondition | null;
+    includeSold: boolean;
   }) => void;
 }
 
@@ -28,6 +30,7 @@ export default function FilterDrawer({
   priceMin,
   priceMax,
   condition,
+  includeSold,
   onApply,
 }: FilterDrawerProps) {
   const [localCategory, setLocalCategory] = useState<string | null>(activeCategory);
@@ -36,6 +39,7 @@ export default function FilterDrawer({
   const [localCondition, setLocalCondition] = useState<ListingCondition | null>(
     condition
   );
+  const [localIncludeSold, setLocalIncludeSold] = useState<boolean>(includeSold);
 
   // When drawer opens, seed form from current URL params.
   useEffect(() => {
@@ -44,8 +48,9 @@ export default function FilterDrawer({
       setLocalPriceMin(priceMin);
       setLocalPriceMax(priceMax);
       setLocalCondition(condition);
+      setLocalIncludeSold(includeSold);
     }
-  }, [open, activeCategory, priceMin, priceMax, condition]);
+  }, [open, activeCategory, priceMin, priceMax, condition, includeSold]);
 
   const handleApply = () => {
     onApply({
@@ -53,6 +58,7 @@ export default function FilterDrawer({
       priceMin: localPriceMin,
       priceMax: localPriceMax,
       condition: localCondition,
+      includeSold: localIncludeSold,
     });
     onClose();
   };
@@ -62,6 +68,7 @@ export default function FilterDrawer({
     setLocalPriceMin(null);
     setLocalPriceMax(null);
     setLocalCondition(null);
+    setLocalIncludeSold(false);
   };
 
   return (
@@ -111,12 +118,14 @@ export default function FilterDrawer({
             priceMin={localPriceMin}
             priceMax={localPriceMax}
             condition={localCondition}
+            includeSold={localIncludeSold}
             onCategorySelect={setLocalCategory}
             onPriceChange={(min, max) => {
               setLocalPriceMin(min);
               setLocalPriceMax(max);
             }}
             onConditionSelect={setLocalCondition}
+            onIncludeSoldChange={setLocalIncludeSold}
           />
         </div>
 

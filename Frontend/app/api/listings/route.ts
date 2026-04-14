@@ -18,6 +18,7 @@ type DbListingRow = {
   seller_id: string;
   created_at: string;
   view_count: number;
+  status: Listing["status"];
   total_count: number;
 };
 
@@ -31,6 +32,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     price_min: searchParams.get("price_min") ?? "",
     price_max: searchParams.get("price_max") ?? "",
     condition: (searchParams.get("condition") ?? "").trim(),
+    include_sold: searchParams.get("include_sold") ?? "",
     page: Number.parseInt(searchParams.get("page") ?? "1", 10),
     limit: Number.parseInt(searchParams.get("limit") ?? "20", 10),
   };
@@ -50,7 +52,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const { q, category, price_min, price_max, condition, page, limit } =
+  const { q, category, price_min, price_max, condition, include_sold, page, limit } =
     parsed.data;
 
   // When a category filter is present, ensure it exists; unknown slug → 404.
@@ -106,6 +108,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     filters.push(`l.condition = $${conditionParamIndex}`);
   }
 
+  if (!include_sold) {
+    // Default browse behavior hides sold listings unless explicitly requested.
+    filters.push(`l.status <> 'sold'`);
+  }
+
   const whereClause = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
 
   // Pagination parameters
@@ -136,6 +143,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       l.seller_id,
       l.created_at,
       l.view_count,
+      l.status,
       COUNT(*) OVER () AS total_count
     FROM listings l
     JOIN categories c ON c.id = l.category_id
@@ -169,6 +177,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     seller_id: row.seller_id,
     created_at: row.created_at,
     view_count: row.view_count,
+    status: row.status,
   }));
 
   return NextResponse.json(

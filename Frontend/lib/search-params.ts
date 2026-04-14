@@ -10,6 +10,7 @@ export const SEARCH_PARAM_KEYS = {
   price_min: "price_min",
   price_max: "price_max",
   condition: "condition",
+  include_sold: "include_sold",
   page: "page",
   limit: "limit",
 } as const;
@@ -25,6 +26,7 @@ export function applySearchParams(
     price_min?: number | null;
     price_max?: number | null;
     condition?: string | null;
+    include_sold?: boolean | null;
   }
 ): URLSearchParams {
   const next = new URLSearchParams(current.toString());
@@ -49,6 +51,10 @@ export function applySearchParams(
   if (updates.condition !== undefined) {
     if (updates.condition) next.set(SEARCH_PARAM_KEYS.condition, updates.condition);
     else next.delete(SEARCH_PARAM_KEYS.condition);
+  }
+  if (updates.include_sold !== undefined) {
+    if (updates.include_sold) next.set(SEARCH_PARAM_KEYS.include_sold, "true");
+    else next.delete(SEARCH_PARAM_KEYS.include_sold);
   }
   return next;
 }
