@@ -12,6 +12,7 @@ export interface ListingsBrowseParams {
   priceMin: number | null;
   priceMax: number | null;
   condition: ListingCondition | null;
+  includeSold: boolean;
 }
 
 /** Raw searchParams from the page (e.g. from searchParams Promise). */
@@ -24,12 +25,14 @@ export function parseListingsSearchParams(
   const priceMin = parseOptionalNumber(raw[SEARCH_PARAM_KEYS.price_min]);
   const priceMax = parseOptionalNumber(raw[SEARCH_PARAM_KEYS.price_max]);
   const condition = parseCondition(raw[SEARCH_PARAM_KEYS.condition]);
+  const includeSold = parseBoolean(raw[SEARCH_PARAM_KEYS.include_sold]);
   return {
     q: raw[SEARCH_PARAM_KEYS.q] ?? "",
     category,
     priceMin,
     priceMax,
     condition,
+    includeSold,
   };
 }
 
@@ -44,6 +47,10 @@ function parseOptionalNumber(value: string | undefined): number | null {
   if (value == null || value === "") return null;
   const n = Number.parseFloat(value);
   return Number.isNaN(n) ? null : n;
+}
+
+function parseBoolean(value: string | undefined): boolean {
+  return value === "true";
 }
 
 /**
@@ -63,6 +70,7 @@ export async function fetchListingsForBrowse(
   if (params.priceMax != null)
     searchParams.set("price_max", String(params.priceMax));
   if (params.condition) searchParams.set("condition", params.condition);
+  if (params.includeSold) searchParams.set("include_sold", "true");
   searchParams.set("page", "1");
   searchParams.set("limit", "20");
 

@@ -2,17 +2,21 @@
 
 import Image from "next/image";
 import { useMemo, useState } from "react";
+import SoldBannerOverlay from "@/components/listings/SoldBannerOverlay";
 
 interface ListingImageCarouselProps {
   /** Ordered image URLs. Empty/invalid entries are ignored. */
   images: readonly (string | null | undefined)[];
   /** Used as alt text and for placeholder state. */
   title: string;
+  /** Whether the listing is sold and should show a banner. */
+  isSold?: boolean;
 }
 
 export default function ListingImageCarousel({
   images,
   title,
+  isSold = false,
 }: ListingImageCarouselProps) {
   const cleaned = useMemo(
     () => images.filter((u): u is string => typeof u === "string" && u.length > 0),
@@ -38,6 +42,7 @@ export default function ListingImageCarousel({
   return (
     <div className="relative w-full overflow-hidden rounded-card bg-surface border border-border">
       <div className="relative aspect-video w-full bg-surface">
+        {isSold ? <SoldBannerOverlay /> : null}
         {src ? (
           <Image
             src={src}

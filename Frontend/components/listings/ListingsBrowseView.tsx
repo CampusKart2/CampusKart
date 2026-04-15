@@ -15,6 +15,7 @@ export interface ListingsBrowseViewProps {
   priceMin: number | null;
   priceMax: number | null;
   condition: ListingCondition | null;
+  includeSold: boolean;
 }
 
 function SkeletonGrid() {
@@ -39,6 +40,7 @@ export function ListingsBrowseView({
   priceMin,
   priceMax,
   condition,
+  includeSold,
 }: ListingsBrowseViewProps) {
   return (
     <div className="flex h-[calc(100vh-56px)]">
@@ -50,6 +52,7 @@ export function ListingsBrowseView({
             priceMin={priceMin}
             priceMax={priceMax}
             condition={condition}
+            includeSold={includeSold}
           />
         </Suspense>
       </div>
@@ -66,6 +69,7 @@ export function ListingsBrowseView({
                   priceMin={priceMin}
                   priceMax={priceMax}
                   condition={condition}
+                  includeSold={includeSold}
                 />
               </Suspense>
             </div>
@@ -81,6 +85,7 @@ export function ListingsBrowseView({
               priceMin={priceMin}
               priceMax={priceMax}
               condition={condition}
+              includeSold={includeSold}
             />
           </Suspense>
 

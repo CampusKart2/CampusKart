@@ -141,6 +141,15 @@ export const listingsQuerySchema = z
         })
         .optional()
     ),
+    include_sold: z.preprocess(
+      (v) => {
+        if (v === "" || v === null || v === undefined) return false;
+        if (typeof v === "boolean") return v;
+        if (typeof v === "string") return v.toLowerCase() === "true";
+        return false;
+      },
+      z.boolean()
+    ),
     page: z
       .number()
       .int()

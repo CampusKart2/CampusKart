@@ -2,15 +2,17 @@ import Link from "next/link";
 import Image from "next/image";
 import type { Listing, NearbyListing } from "@/lib/types/listing";
 import ConditionBadge from "@/components/listings/ConditionBadge";
+import SoldBannerOverlay from "@/components/listings/SoldBannerOverlay";
 
 interface ListingCardProps {
   listing: Listing | NearbyListing;
 }
 
 export default function ListingCard({ listing }: ListingCardProps) {
-  const { id, title, price, condition, category, thumbnail_url } = listing;
+  const { id, title, price, condition, category, thumbnail_url, status } = listing;
   const distanceLabel =
     "distance_miles" in listing ? `${listing.distance_miles.toFixed(1)} mi away` : null;
+  const isSold = status === "sold";
 
   return (
     <Link
@@ -51,6 +53,7 @@ export default function ListingCard({ listing }: ListingCardProps) {
             {distanceLabel}
           </div>
         ) : null}
+        {isSold ? <SoldBannerOverlay className={distanceLabel ? "top-10" : ""} /> : null}
       </div>
 
       {/* Content */}

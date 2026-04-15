@@ -31,9 +31,11 @@ export interface FilterSidebarProps {
   priceMin: number | null;
   priceMax: number | null;
   condition: ListingCondition | null;
+  includeSold: boolean;
   onCategorySelect: (slug: string | null) => void;
   onPriceChange: (min: number | null, max: number | null) => void;
   onConditionSelect: (condition: ListingCondition | null) => void;
+  onIncludeSoldChange: (include: boolean) => void;
 }
 
 const SECTION_HEADING =
@@ -45,9 +47,11 @@ export function FilterFormContent({
   priceMin,
   priceMax,
   condition,
+  includeSold,
   onCategorySelect,
   onPriceChange,
   onConditionSelect,
+  onIncludeSoldChange,
 }: FilterSidebarProps) {
   const handlePriceMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value.trim();
@@ -177,6 +181,20 @@ export function FilterFormContent({
               )
             )}
           </div>
+        </section>
+
+        {/* Sold listings toggle */}
+        <section>
+          <h2 className={SECTION_HEADING}>Listing status</h2>
+          <label className="flex items-center gap-3 rounded-input border border-border bg-surface px-3 py-2.5 text-sm text-text-primary">
+            <input
+              type="checkbox"
+              checked={includeSold}
+              onChange={(event) => onIncludeSoldChange(event.target.checked)}
+              className="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+            />
+            Include sold listings
+          </label>
         </section>
     </div>
   );

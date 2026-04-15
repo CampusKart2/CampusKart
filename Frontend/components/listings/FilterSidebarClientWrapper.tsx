@@ -10,6 +10,7 @@ export interface FilterSidebarClientWrapperProps {
   priceMin: number | null;
   priceMax: number | null;
   condition: ListingCondition | null;
+  includeSold: boolean;
 }
 
 /**
@@ -22,6 +23,7 @@ export default function FilterSidebarClientWrapper({
   priceMin,
   priceMax,
   condition,
+  includeSold,
 }: FilterSidebarClientWrapperProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -31,6 +33,7 @@ export default function FilterSidebarClientWrapper({
     price_min?: number | null;
     price_max?: number | null;
     condition?: ListingCondition | null;
+    include_sold?: boolean | null;
   }) => {
     const params = applySearchParams(searchParams, updates);
     router.push(`?${params.toString()}`, { scroll: false });
@@ -48,15 +51,21 @@ export default function FilterSidebarClientWrapper({
     setParams({ condition: c });
   };
 
+  const onIncludeSoldChange = (next: boolean) => {
+    setParams({ include_sold: next });
+  };
+
   return (
     <FilterSidebar
       activeCategory={activeCategory}
       priceMin={priceMin}
       priceMax={priceMax}
       condition={condition}
+      includeSold={includeSold}
       onCategorySelect={onCategorySelect}
       onPriceChange={onPriceChange}
       onConditionSelect={onConditionSelect}
+      onIncludeSoldChange={onIncludeSoldChange}
     />
   );
 }

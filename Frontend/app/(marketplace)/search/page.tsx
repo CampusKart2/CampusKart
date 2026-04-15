@@ -16,6 +16,7 @@ interface SearchPageProps {
     price_min?: string;
     price_max?: string;
     condition?: string;
+    include_sold?: string;
   }>;
 }
 
@@ -33,6 +34,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       priceMin={params.priceMin}
       priceMax={params.priceMax}
       condition={params.condition}
+      includeSold={params.includeSold}
     />
   );
 }

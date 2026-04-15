@@ -12,6 +12,7 @@ export interface MobileFilterButtonWrapperProps {
   priceMin: number | null;
   priceMax: number | null;
   condition: ListingCondition | null;
+  includeSold: boolean;
 }
 
 /**
@@ -23,6 +24,7 @@ export default function MobileFilterButtonWrapper({
   priceMin,
   priceMax,
   condition,
+  includeSold,
 }: MobileFilterButtonWrapperProps) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
@@ -33,12 +35,14 @@ export default function MobileFilterButtonWrapper({
     priceMin: number | null;
     priceMax: number | null;
     condition: ListingCondition | null;
+    includeSold: boolean;
   }) => {
     const params = applySearchParams(searchParams, {
       category: filters.category,
       price_min: filters.priceMin,
       price_max: filters.priceMax,
       condition: filters.condition,
+      include_sold: filters.includeSold,
     });
     router.push(`?${params.toString()}`, { scroll: false });
     setOpen(false);
@@ -62,6 +66,7 @@ export default function MobileFilterButtonWrapper({
         priceMin={priceMin}
         priceMax={priceMax}
         condition={condition}
+        includeSold={includeSold}
         onApply={onApply}
       />
     </>

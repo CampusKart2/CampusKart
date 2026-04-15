@@ -24,6 +24,7 @@ export interface ActiveFilterChipsProps {
   priceMin: number | null;
   priceMax: number | null;
   condition: ListingCondition | null;
+  includeSold: boolean;
 }
 
 /**
@@ -36,6 +37,7 @@ export default function ActiveFilterChips({
   priceMin,
   priceMax,
   condition,
+  includeSold,
 }: ActiveFilterChipsProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -46,6 +48,7 @@ export default function ActiveFilterChips({
     price_min?: null;
     price_max?: null;
     condition?: null;
+    include_sold?: null;
   }) => {
     const params = applySearchParams(searchParams, updates);
     router.push(`?${params.toString()}`, { scroll: false });
@@ -85,6 +88,13 @@ export default function ActiveFilterChips({
       id: "condition",
       label: condition,
       onRemove: () => removeFilter({ condition: null }),
+    });
+  }
+  if (includeSold) {
+    chips.push({
+      id: "include_sold",
+      label: "Including sold",
+      onRemove: () => removeFilter({ include_sold: null }),
     });
   }
 
