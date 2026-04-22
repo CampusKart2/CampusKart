@@ -103,7 +103,9 @@ export async function GET(
       `
       SELECT COUNT(*)::text AS count
       FROM listings
-      WHERE seller_id = $1 AND status = 'active'
+      WHERE seller_id = $1
+        AND status <> 'deleted'
+        AND status = 'active'
       `,
       [userId]
     );
@@ -138,7 +140,9 @@ export async function GET(
         l.view_count
       FROM listings l
       JOIN categories c ON c.id = l.category_id
-      WHERE l.seller_id = $1 AND l.status = 'active'
+      WHERE l.seller_id = $1
+        AND l.status <> 'deleted'
+        AND l.status = 'active'
       ORDER BY l.created_at DESC
       LIMIT $2
       OFFSET $3

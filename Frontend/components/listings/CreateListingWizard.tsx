@@ -17,8 +17,8 @@ import {
   createListingDetailsSchema,
   createListingPhotosSchema,
   updateListingBodySchema,
-  LISTING_STATUSES,
-  type ListingStatus,
+  EDITABLE_LISTING_STATUSES,
+  type EditableListingStatus,
 } from "@/lib/validators/listings";
 import {
   ArrowLeft,
@@ -173,7 +173,7 @@ export type CreateListingWizardProps = {
     condition: ListingCondition;
     category: string;
     photoUrls: string[];
-    status: ListingStatus;
+    status: EditableListingStatus;
   };
 };
 
@@ -195,7 +195,7 @@ export default function CreateListingWizard({
     () => initialData?.condition ?? "Good"
   );
   const [category, setCategory] = useState(() => initialData?.category ?? "");
-  const [status, setStatus] = useState<ListingStatus>(
+  const [status, setStatus] = useState<EditableListingStatus>(
     () => initialData?.status ?? "active"
   );
   const [photos, setPhotos] = useState<PhotoItem[]>(() =>
@@ -894,12 +894,12 @@ export default function CreateListingWizard({
               <select
                 value={status}
                 onChange={(event) =>
-                  setStatus(event.target.value as ListingStatus)
+                  setStatus(event.target.value as EditableListingStatus)
                 }
                 className="mt-2 w-full rounded-input border border-border bg-surface px-3 py-2 text-sm text-text-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
                 aria-invalid={Boolean(fieldErrors.status)}
               >
-                {LISTING_STATUSES.map((option) => (
+                {EDITABLE_LISTING_STATUSES.map((option) => (
                   <option key={option} value={option}>
                     {option.charAt(0).toUpperCase() + option.slice(1)}
                   </option>

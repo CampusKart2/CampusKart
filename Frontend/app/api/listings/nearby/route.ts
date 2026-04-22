@@ -76,7 +76,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     FROM listings l
     JOIN categories c ON c.id = l.category_id
     CROSS JOIN origin
-    WHERE l.status = 'active'
+    WHERE l.status <> 'deleted'
+      AND l.status = 'active'
       AND l.location IS NOT NULL
       AND ST_DWithin(l.location, origin.point, $3)
     ORDER BY distance_meters ASC, l.created_at DESC
