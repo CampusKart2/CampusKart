@@ -196,8 +196,19 @@ export const createListingPhotosSchema = createListingBodyBaseSchema.pick({
 export type CreateListingBodyInput = z.infer<typeof createListingBodySchema>;
 
 /** Valid status values for the listings.status column. */
-export const LISTING_STATUSES = ["active", "inactive", "sold"] as const;
+export const LISTING_STATUSES = ["active", "sold", "deleted"] as const;
 export type ListingStatus = (typeof LISTING_STATUSES)[number];
+
+/**
+ * Status values that sellers may set through the generic edit flow.
+ *
+ * Deletion is intentionally excluded here so soft deletes always go through
+ * DELETE /api/listings/:id, which preserves the audit trail without exposing
+ * "deleted" as a regular form field.
+ */
+export const EDITABLE_LISTING_STATUSES = ["active", "sold"] as const;
+export type EditableListingStatus =
+  (typeof EDITABLE_LISTING_STATUSES)[number];
 
 const updateListingBodyShape = {
   title: z
@@ -227,8 +238,8 @@ const updateListingBodyShape = {
     .transform((value) => value.toLowerCase())
     .optional(),
   status: z
-    .enum(LISTING_STATUSES, {
-      error: "Status must be one of: active, inactive, sold.",
+    .enum(EDITABLE_LISTING_STATUSES, {
+      error: "Status must be one of: active, sold.",
     })
     .optional(),
   photoUrls: z

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { pool } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
+import type { ListingStatus } from "@/lib/types/listing";
 
 const paramsSchema = z.object({
   id: z.string().uuid("Listing id must be a valid UUID."),
@@ -9,7 +10,7 @@ const paramsSchema = z.object({
 
 type DbSoldListingRow = {
   id: string;
-  status: "active" | "inactive" | "sold";
+  status: ListingStatus;
 };
 
 /**
@@ -53,8 +54,11 @@ export async function PATCH(
   try {
     await client.query("BEGIN");
 
-    const ownerResult = await client.query<{ seller_id: string }>(
-      "SELECT seller_id FROM listings WHERE id = $1 LIMIT 1 FOR UPDATE",
+    const ownerResult = await client.query<{
+      seller_id: string;
+      status: ListingStatus;
+    }>(
+      "SELECT seller_id, status FROM listings WHERE id = $1 LIMIT 1 FOR UPDATE",
       [id]
     );
 
@@ -71,6 +75,14 @@ export async function PATCH(
       return NextResponse.json(
         { error: "You are not authorised to update this listing." },
         { status: 403 }
+      );
+    }
+
+    if (ownerResult.rows[0].status === "deleted") {
+      await client.query("ROLLBACK");
+      return NextResponse.json(
+        { error: "Deleted listings can no longer be updated." },
+        { status: 409 }
       );
     }
 

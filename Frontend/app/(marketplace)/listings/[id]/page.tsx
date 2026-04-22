@@ -6,6 +6,7 @@ import ListingImageCarousel from "@/components/listings/ListingImageCarousel";
 import MessageSellerCta from "@/components/listings/MessageSellerCta";
 import ConditionBadge from "@/components/listings/ConditionBadge";
 import MarkAsSoldButton from "@/components/listings/MarkAsSoldButton";
+import DeleteListingButton from "@/components/listings/DeleteListingButton";
 import { fetchListingById } from "@/lib/fetch-listing-detail";
 import { getSession } from "@/lib/auth";
 
@@ -62,6 +63,7 @@ export default async function ListingDetailPage({
                 listingId={id}
                 initialStatus={listing.status}
               />
+              <DeleteListingButton listingId={id} />
             </div>
           ) : null}
         </div>
@@ -140,4 +142,3 @@ export default async function ListingDetailPage({
     </div>
   );
 }
-

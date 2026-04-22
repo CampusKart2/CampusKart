@@ -24,7 +24,7 @@ type DbListingWithSellerRow = {
   view_count: number;
   seller_name: string;
   photo_urls: string[] | null;
-  status: string;
+  status: NonNullable<Listing["status"]>;
 };
 
 type ListingWithSeller = Listing & { seller: { id: string; name: string } };
@@ -103,6 +103,7 @@ export async function GET(
         JOIN categories c ON c.id = l.category_id
         LEFT JOIN listing_photos lp ON lp.listing_id = l.id AND lp.position = 0
         WHERE l.id = $1
+          AND l.status <> 'deleted'
         LIMIT 1
         FOR UPDATE OF l
         `,
@@ -177,7 +178,7 @@ export async function GET(
     created_at: row.created_at,
     view_count: row.view_count,
     photo_urls: photoUrls,
-    status: row.status as Listing["status"],
+    status: row.status,
     seller: {
       id: row.seller_id,
       name: row.seller_name,
@@ -213,7 +214,18 @@ type DbUpdatedListingRow = {
   created_at: string;
   updated_at: string;
   view_count: number;
-  status: string;
+  status: NonNullable<Listing["status"]>;
+};
+
+type DbOwnedListingRow = {
+  seller_id: string;
+  status: NonNullable<Listing["status"]>;
+};
+
+type DbDeletedListingRow = {
+  id: string;
+  status: NonNullable<Listing["status"]>;
+  updated_at: string;
 };
 
 /**
@@ -320,8 +332,8 @@ export async function PATCH(
     await client.query("BEGIN");
 
     // Fetch current seller_id to authorise before mutating.
-    const ownerResult = await client.query<{ seller_id: string }>(
-      "SELECT seller_id FROM listings WHERE id = $1 LIMIT 1 FOR UPDATE",
+    const ownerResult = await client.query<DbOwnedListingRow>(
+      "SELECT seller_id, status FROM listings WHERE id = $1 LIMIT 1 FOR UPDATE",
       [id]
     );
 
@@ -338,6 +350,14 @@ export async function PATCH(
       return NextResponse.json(
         { error: "You are not authorised to edit this listing." },
         { status: 403 }
+      );
+    }
+
+    if (ownerResult.rows[0].status === "deleted") {
+      await client.query("ROLLBACK");
+      return NextResponse.json(
+        { error: "Deleted listings can no longer be edited." },
+        { status: 409 }
       );
     }
 
@@ -488,3 +508,116 @@ export async function PATCH(
   }
 }
 
+/**
+ * DELETE /api/listings/:id
+ *
+ * Soft-deletes a listing by setting status = 'deleted'. The row and all
+ * related records remain in the database for auditability, but the listing
+ * is removed from marketplace surfaces.
+ *
+ * HTTP status codes:
+ *   200 – listing soft-deleted successfully
+ *   400 – invalid UUID param
+ *   401 – not authenticated
+ *   403 – authenticated user is not the listing owner
+ *   404 – listing not found
+ *   409 – listing is already deleted
+ *   500 – unexpected server error
+ */
+export async function DELETE(
+  _request: Request,
+  context: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
+  let session: Awaited<ReturnType<typeof requireSession>>;
+  try {
+    session = await requireSession();
+  } catch {
+    return NextResponse.json(
+      { error: "Authentication required." },
+      { status: 401 }
+    );
+  }
+
+  const rawParams = await context.params;
+  const paramsParsed = paramsSchema.safeParse(rawParams);
+  if (!paramsParsed.success) {
+    return NextResponse.json(
+      {
+        error: "Validation failed.",
+        fields: paramsParsed.error.issues.map((issue) => ({
+          field: issue.path[0] ?? "unknown",
+          message: issue.message,
+        })),
+      },
+      { status: 400 }
+    );
+  }
+
+  const { id } = paramsParsed.data;
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const ownerResult = await client.query<DbOwnedListingRow>(
+      "SELECT seller_id, status FROM listings WHERE id = $1 LIMIT 1 FOR UPDATE",
+      [id]
+    );
+
+    if (ownerResult.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return NextResponse.json(
+        { error: "Listing not found." },
+        { status: 404 }
+      );
+    }
+
+    if (ownerResult.rows[0].seller_id !== session.userId) {
+      await client.query("ROLLBACK");
+      return NextResponse.json(
+        { error: "You are not authorised to delete this listing." },
+        { status: 403 }
+      );
+    }
+
+    if (ownerResult.rows[0].status === "deleted") {
+      await client.query("ROLLBACK");
+      return NextResponse.json(
+        { error: "Listing is already deleted." },
+        { status: 409 }
+      );
+    }
+
+    const deleteResult = await client.query<DbDeletedListingRow>(
+      `
+      UPDATE listings
+      SET status = 'deleted', updated_at = NOW()
+      WHERE id = $1
+      RETURNING id, status, updated_at
+      `,
+      [id]
+    );
+
+    await client.query("COMMIT");
+
+    return NextResponse.json(
+      {
+        listing: {
+          id: deleteResult.rows[0].id,
+          status: deleteResult.rows[0].status,
+          updated_at: deleteResult.rows[0].updated_at,
+        },
+      },
+      { status: 200 }
+    );
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("[DELETE /api/listings/:id] DB error:", err);
+    return NextResponse.json(
+      { error: "Failed to delete listing. Please try again." },
+      { status: 500 }
+    );
+  } finally {
+    client.release();
+  }
+}

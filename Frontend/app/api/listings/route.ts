@@ -108,6 +108,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     filters.push(`l.condition = $${conditionParamIndex}`);
   }
 
+  // Deleted rows remain in the database for auditability but must never
+  // appear in marketplace browse results.
+  filters.push(`l.status <> 'deleted'`);
+
   if (!include_sold) {
     // Default browse behavior hides sold listings unless explicitly requested.
     filters.push(`l.status <> 'sold'`);
@@ -288,4 +292,3 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 }
-
