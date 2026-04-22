@@ -5,7 +5,7 @@ import { z } from "zod";
 import CreateListingWizard from "@/components/listings/CreateListingWizard";
 import { getSession } from "@/lib/auth";
 import { fetchListingById } from "@/lib/fetch-listing-detail";
-import type { ListingStatus } from "@/lib/validators/listings";
+import type { EditableListingStatus } from "@/lib/validators/listings";
 
 const paramsSchema = z.object({
   id: z.string().uuid("Listing id must be a valid UUID."),
@@ -33,7 +33,8 @@ export default async function EditListingPage({ params }: EditListingPageProps) 
     redirect(`/listings/${id}`);
   }
 
-  const status: ListingStatus = listing.status ?? "active";
+  const status: EditableListingStatus =
+    listing.status === "sold" ? "sold" : "active";
 
   return (
     <main className="bg-surface min-h-screen">
