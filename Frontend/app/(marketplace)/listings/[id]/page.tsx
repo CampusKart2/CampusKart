@@ -7,6 +7,7 @@ import MessageSellerCta from "@/components/listings/MessageSellerCta";
 import ConditionBadge from "@/components/listings/ConditionBadge";
 import MarkAsSoldButton from "@/components/listings/MarkAsSoldButton";
 import DeleteListingButton from "@/components/listings/DeleteListingButton";
+import ReportListingButton from "@/components/listings/ReportListingButton";
 import { fetchListingById } from "@/lib/fetch-listing-detail";
 import { getSession } from "@/lib/auth";
 
@@ -136,6 +137,10 @@ export default async function ListingDetailPage({
                 {listing.description}
               </p>
             </div>
+
+            {/* Report is only available to other authenticated users, not the seller.
+                The server computes isOwner so the button is never in the DOM for owners. */}
+            {!isOwner ? <ReportListingButton listingId={id} /> : null}
           </div>
         </div>
       </div>
