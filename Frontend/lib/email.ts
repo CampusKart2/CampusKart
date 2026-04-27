@@ -112,6 +112,8 @@ export async function sendRaw({
   });
 }
 
+// ── Email verification ─────────────────────────────────────────────────────────
+
 function buildVerificationEmailHtml(verificationLink: string): string {
   return `
     <div style="margin:0;padding:32px 16px;background-color:#f4f7fb;font-family:Arial,sans-serif;color:#111827;">
@@ -180,5 +182,121 @@ export async function sendVerificationEmail(
     subject: "Verify your CampusKart email address",
     text: buildVerificationEmailText(verificationLink),
     html: buildVerificationEmailHtml(verificationLink),
+  });
+}
+
+// ── Report threshold alert ─────────────────────────────────────────────────────
+
+export interface ReportThresholdAlertInput {
+  /** Admin inbox that receives the alert. */
+  adminEmail: string;
+  listingId: string;
+  listingTitle: string;
+  reportCount: number;
+}
+
+function buildReportAlertHtml(
+  input: Omit<ReportThresholdAlertInput, "adminEmail"> & { listingUrl: string }
+): string {
+  const { listingTitle, listingUrl, reportCount } = input;
+
+  return `
+    <div style="margin:0;padding:32px 16px;background-color:#f4f7fb;font-family:Arial,sans-serif;color:#111827;">
+      <div style="max-width:600px;margin:0 auto;background-color:#ffffff;border:1px solid #e5e7eb;border-radius:16px;padding:40px 32px;">
+        <p style="margin:0 0 16px;font-size:14px;letter-spacing:0.08em;text-transform:uppercase;color:#2563eb;font-weight:700;">
+          CampusKart &middot; Moderation Alert
+        </p>
+        <h1 style="margin:0 0 16px;font-size:24px;line-height:1.3;color:#111827;">
+          Listing flagged for review
+        </h1>
+        <p style="margin:0 0 16px;font-size:16px;line-height:1.7;color:#374151;">
+          The following listing has received <strong>${reportCount} reports</strong>
+          and has been automatically flagged for moderation review.
+        </p>
+
+        <table style="width:100%;border-collapse:collapse;margin:0 0 24px;">
+          <tr>
+            <td style="padding:10px 12px;background:#f9fafb;border:1px solid #e5e7eb;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-weight:600;width:36%;">
+              Listing Title
+            </td>
+            <td style="padding:10px 12px;background:#f9fafb;border:1px solid #e5e7eb;border-left:0;font-size:15px;color:#111827;font-weight:600;">
+              ${listingTitle}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:10px 12px;background:#f9fafb;border:1px solid #e5e7eb;border-top:0;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;font-weight:600;">
+              Report Count
+            </td>
+            <td style="padding:10px 12px;background:#f9fafb;border:1px solid #e5e7eb;border-top:0;border-left:0;font-size:15px;color:#dc2626;font-weight:700;">
+              ${reportCount}
+            </td>
+          </tr>
+        </table>
+
+        <p style="margin:0 0 24px;">
+          <a
+            href="${listingUrl}"
+            style="display:inline-block;padding:14px 24px;border-radius:10px;background-color:#2563eb;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;"
+          >
+            Review Listing
+          </a>
+        </p>
+
+        <p style="margin:0;font-size:13px;line-height:1.7;color:#6b7280;">
+          This alert was sent automatically when the report count crossed the
+          threshold. No further alerts will be sent for this listing unless
+          the flag is manually cleared.
+        </p>
+      </div>
+    </div>
+  `;
+}
+
+function buildReportAlertText(
+  input: Omit<ReportThresholdAlertInput, "adminEmail"> & { listingUrl: string }
+): string {
+  const { listingTitle, listingUrl, reportCount } = input;
+
+  return [
+    "CampusKart — Moderation Alert",
+    "",
+    "A listing has been flagged for review.",
+    "",
+    `Title:        ${listingTitle}`,
+    `Report count: ${reportCount}`,
+    `Review at:    ${listingUrl}`,
+    "",
+    "This is an automated one-time alert. No further alerts will be sent",
+    "for this listing unless the flag is manually cleared.",
+  ].join("\n");
+}
+
+/**
+ * Sends a one-time moderation alert when a listing crosses the report threshold.
+ * The caller is responsible for ensuring this is only called once per listing
+ * (enforced by the report_alert_sent_at flag in the listings table).
+ */
+export async function sendReportThresholdAlert(
+  input: ReportThresholdAlertInput
+): Promise<SentMessageInfo> {
+  const { config } = getEmailClient();
+
+  const listingUrl = new URL(
+    `/listings/${encodeURIComponent(input.listingId)}`,
+    config.baseUrl
+  ).toString();
+
+  const templateInput = {
+    listingId: input.listingId,
+    listingTitle: input.listingTitle,
+    reportCount: input.reportCount,
+    listingUrl,
+  };
+
+  return sendRaw({
+    to: input.adminEmail,
+    subject: `[CampusKart] Listing flagged for review — "${input.listingTitle}"`,
+    text: buildReportAlertText(templateInput),
+    html: buildReportAlertHtml(templateInput),
   });
 }
