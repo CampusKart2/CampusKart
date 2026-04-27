@@ -65,15 +65,6 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // user isn't found so response timing doesn't reveal whether an address is
   // registered (timing-safe against user-enumeration attacks).
   try {
-    let user:
-      | {
-          id: string;
-          full_name: string;
-          password_hash: string;
-          email_verified: boolean;
-        }
-      | undefined;
-
     const rows = await query<{
       id: string;
       full_name: string;
@@ -83,7 +74,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       `SELECT id, full_name, password_hash, email_verified FROM users WHERE email = $1 LIMIT 1`,
       [email]
     );
-    user = rows[0];
+    const user = rows[0];
 
     // Dummy hash keeps timing consistent when the email is not found
     const DUMMY_HASH =

@@ -17,6 +17,7 @@ export default function SearchBar() {
 
   // Sync input when URL changes (e.g. browser back/forward or shared link).
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setValue(searchParams.get(SEARCH_PARAM_KEYS.q) ?? "");
   }, [searchParams]);
 

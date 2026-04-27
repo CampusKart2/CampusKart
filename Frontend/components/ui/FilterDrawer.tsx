@@ -44,11 +44,13 @@ export default function FilterDrawer({
   // When drawer opens, seed form from current URL params.
   useEffect(() => {
     if (open) {
+      /* eslint-disable react-hooks/set-state-in-effect */
       setLocalCategory(activeCategory);
       setLocalPriceMin(priceMin);
       setLocalPriceMax(priceMax);
       setLocalCondition(condition);
       setLocalIncludeSold(includeSold);
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [open, activeCategory, priceMin, priceMax, condition, includeSold]);
 
