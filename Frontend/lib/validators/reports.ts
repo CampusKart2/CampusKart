@@ -1,16 +1,8 @@
 import { z } from "zod";
+import { REPORT_REASONS } from "@/lib/types/report";
+import type { ReportReason } from "@/lib/types/report";
 
-/** Must stay in sync with the report_reason enum in 0009_create_reports_table.sql. */
-export const REPORT_REASONS = [
-  "prohibited_item",
-  "scam_or_fraud",
-  "misleading_info",
-  "wrong_price",
-  "spam",
-  "other",
-] as const;
-
-export type ReportReason = (typeof REPORT_REASONS)[number];
+export { REPORT_REASONS, type ReportReason };
 
 export const createReportBodySchema = z.object({
   reason: z.enum(REPORT_REASONS, {

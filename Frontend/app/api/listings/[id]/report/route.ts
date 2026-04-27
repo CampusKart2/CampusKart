@@ -3,6 +3,7 @@ import { z } from "zod";
 import { pool } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
 import { createReportBodySchema } from "@/lib/validators/reports";
+import type { ReportReason } from "@/lib/types/report";
 import { sendReportThresholdAlert } from "@/lib/email";
 
 // How many reports on a single listing trigger the admin alert.
@@ -24,7 +25,7 @@ type DbReportRow = {
   id: string;
   listing_id: string;
   reporter_id: string | null;
-  reason: string;
+  reason: ReportReason;
   notes: string | null;
   created_at: string;
 };

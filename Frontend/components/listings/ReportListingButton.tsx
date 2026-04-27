@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { z } from "zod";
-import { REPORT_REASONS, type ReportReason } from "@/lib/validators/reports";
+import {
+  REPORT_REASON_LABELS,
+  REPORT_REASONS,
+  type ReportReason,
+} from "@/lib/types/report";
 
 // ── Response schema ────────────────────────────────────────────────────────────
 
@@ -11,23 +15,11 @@ const reportResponseSchema = z.object({
     id: z.string().uuid(),
     listing_id: z.string().uuid(),
     reporter_id: z.string().uuid().nullable(),
-    reason: z.string(),
+    reason: z.enum(REPORT_REASONS),
     notes: z.string().nullable(),
     created_at: z.string(),
   }),
 });
-
-// ── Constants ──────────────────────────────────────────────────────────────────
-
-// Human-readable labels for each report_reason enum value.
-const REASON_LABELS: Record<ReportReason, string> = {
-  prohibited_item: "Prohibited Item",
-  scam_or_fraud: "Scam or Fraud",
-  misleading_info: "Misleading Information",
-  wrong_price: "Wrong Price",
-  spam: "Spam",
-  other: "Other",
-};
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -71,15 +63,15 @@ export default function ReportListingButton({
     setSelectedReason(reason);
     // Clear any prior error when the user makes a new selection.
     setErrorMessage(null);
-    // Clear notes when switching away from "other" so stale text isn't sent.
-    if (reason !== "other") setNotes("");
+    // Clear notes when switching away from "Other" so stale text isn't sent.
+    if (reason !== "Other") setNotes("");
   }
 
   async function handleSubmit(): Promise<void> {
     if (!selectedReason || isSubmitting) return;
 
-    // "other" requires elaboration so the moderation team has enough context.
-    if (selectedReason === "other" && !notes.trim()) {
+    // "Other" requires elaboration so the moderation team has enough context.
+    if (selectedReason === "Other" && !notes.trim()) {
       setErrorMessage(
         'Please describe the issue when selecting "Other".'
       );
@@ -142,7 +134,7 @@ export default function ReportListingButton({
       <button
         type="button"
         onClick={openModal}
-        className="mt-5 text-xs text-text-muted underline-offset-2 transition-colors hover:text-danger hover:underline"
+        className="mt-5 text-xs text-danger underline-offset-2 transition-colors hover:underline"
       >
         Report this listing
       </button>
@@ -242,7 +234,7 @@ export default function ReportListingButton({
                           onChange={() => handleReasonChange(reason)}
                           className="accent-primary"
                         />
-                        {REASON_LABELS[reason]}
+                        {REPORT_REASON_LABELS[reason]}
                       </label>
                     ))}
                   </div>
@@ -256,7 +248,7 @@ export default function ReportListingButton({
                       htmlFor="report-notes"
                       className="text-xs font-semibold text-text-muted"
                     >
-                      {selectedReason === "other" ? (
+                      {selectedReason === "Other" ? (
                         <>
                           Please describe the issue{" "}
                           <span className="text-danger" aria-hidden="true">
@@ -278,10 +270,10 @@ export default function ReportListingButton({
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                       maxLength={500}
-                      rows={selectedReason === "other" ? 3 : 2}
+                      rows={selectedReason === "Other" ? 3 : 2}
                       disabled={isSubmitting}
                       placeholder={
-                        selectedReason === "other"
+                        selectedReason === "Other"
                           ? "Briefly describe the problem…"
                           : "Anything else to help our review… (optional)"
                       }
@@ -321,7 +313,7 @@ export default function ReportListingButton({
                     disabled={isSubmitting || selectedReason === null}
                     className="inline-flex w-full items-center justify-center rounded-button bg-danger px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-95 disabled:opacity-50 sm:w-auto"
                   >
-                    {isSubmitting ? "Submitting…" : "Submit Report"}
+                    {isSubmitting ? "Submitting…" : "Report"}
                   </button>
                 </div>
               </>

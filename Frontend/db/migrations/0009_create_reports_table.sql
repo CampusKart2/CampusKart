@@ -23,12 +23,12 @@ BEGIN
            )
   ) THEN
     CREATE TYPE report_reason AS ENUM (
-      'prohibited_item',      -- item not allowed on campus marketplace
-      'scam_or_fraud',        -- suspected scam or fraudulent listing
-      'misleading_info',      -- inaccurate title, description, or photos
-      'wrong_price',          -- price does not match the item advertised
-      'spam',                 -- duplicate or irrelevant listing
-      'other'                 -- catch-all; details captured in notes
+      'Prohibited item',      -- item not allowed on campus marketplace
+      'Spam or scam',         -- suspected spam, scam, or fraudulent listing
+      'Offensive content',    -- abusive, hateful, or otherwise unsafe content
+      'Wrong category',       -- listing appears in the wrong category
+      'Already sold',         -- listing is no longer available
+      'Other'                 -- catch-all; details captured in notes
     );
   END IF;
 END $$;
