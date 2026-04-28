@@ -1,8 +1,9 @@
 import Link from "next/link";
-import NavbarSearchBar from "./NavbarSearchBar";
-import MobileMenu from "./MobileMenu";
-import { getSession } from "@/lib/auth";
+import GetStreamNotificationBell from "@/components/notifications/GetStreamNotificationBell";
 import { logoutAction } from "@/app/(auth)/actions";
+import { getSession } from "@/lib/auth";
+import MobileMenu from "./MobileMenu";
+import NavbarSearchBar from "./NavbarSearchBar";
 
 export default async function Navbar() {
   // getSession() now returns SessionPayload | null
@@ -30,6 +31,9 @@ export default async function Navbar() {
         <nav className="hidden md:flex items-center gap-2 flex-shrink-0">
           {isLoggedIn ? (
             <>
+              {session !== null && session.emailVerified ? (
+                <GetStreamNotificationBell userId={session.userId} />
+              ) : null}
               <Link
                 href="/sell"
                 className="px-4 py-2 text-sm font-semibold text-primary border border-primary rounded-button hover:bg-primary-light transition"
@@ -84,7 +88,10 @@ export default async function Navbar() {
         </nav>
 
         {/* Mobile: hamburger (shown below md) */}
-        <div className="flex md:hidden ml-auto">
+        <div className="flex md:hidden ml-auto items-center gap-1">
+          {isLoggedIn && session !== null && session.emailVerified ? (
+            <GetStreamNotificationBell userId={session.userId} />
+          ) : null}
           {/* Pass the full session so MobileMenu can show user context + logout */}
           <MobileMenu session={session} />
         </div>
