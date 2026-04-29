@@ -7,7 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "check:supabase": "node scripts/check-supabase.js"
+    "check:supabase": "node scripts/check-supabase.js",
+    "check:notifications": "node scripts/check-notifications.js",
+    "webhook:configure": "node scripts/configure-getstream-webhook.js",
+    "webhook:configure:qa": "node scripts/configure-getstream-webhook-qa.js",
+    "webhook:configure:dev": "node scripts/configure-getstream-webhook-dev.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

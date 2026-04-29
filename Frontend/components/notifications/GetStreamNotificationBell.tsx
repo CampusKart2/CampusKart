@@ -141,7 +141,7 @@ export default function GetStreamNotificationBell({ userId }: Props) {
     }
 
     let cancelled = false;
-    const client = StreamChat.getInstance(apiKey);
+    const client = new StreamChat(apiKey);
     clientRef.current = client;
 
     async function connect(): Promise<void> {
