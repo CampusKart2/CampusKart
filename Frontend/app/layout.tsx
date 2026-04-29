@@ -4,6 +4,7 @@ import Navbar from "@/components/ui/Navbar";
 import UnverifiedEmailBanner from "@/components/ui/UnverifiedEmailBanner";
 import { getSession } from "@/lib/auth";
 import "./globals.css";
+import "stream-chat-react/dist/css/index.css";
 
 const inter = Inter({
   subsets: ["latin"],

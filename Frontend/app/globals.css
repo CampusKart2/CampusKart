@@ -2,3 +2,49 @@
 @tailwind components;
 @tailwind utilities;
 @config "../tailwind.config.ts";
+
+/* Stream Chat Customizations */
+.str-chat__composer {
+  @apply bg-card border-t border-border p-4 !important;
+}
+
+/* The primary container for the input pill */
+.str-chat__message-input {
+  @apply flex flex-row items-center bg-white border border-border rounded-full min-h-[48px] px-2 py-1 transition-all focus-within:border-primary !important;
+}
+
+/* Position the paperclip INSIDE the pill on the left */
+.str-chat__composer-action {
+  @apply flex items-center justify-center p-2 hover:bg-surface rounded-full transition-colors !important;
+}
+
+.str-chat__composer-action svg {
+  @apply w-5 h-5 text-text-muted hover:text-primary transition-colors !important;
+}
+
+/* The inner wrapper for the textarea */
+.str-chat__message-input-inner {
+  @apply flex-1 flex items-center min-w-0 !important;
+}
+
+.str-chat__message-input textarea {
+  @apply bg-transparent border-none py-2 px-2 focus:ring-0 w-full !important;
+}
+
+/* Position the send button INSIDE the pill on the right */
+.str-chat__send-button {
+  @apply flex items-center justify-center p-2 hover:bg-surface rounded-full transition-colors !important;
+}
+
+.str-chat__send-button svg {
+  @apply w-5 h-5 !important;
+}
+
+/* Inbox list styling */
+.str-chat__channel-list {
+  @apply bg-white border-none !important;
+}
+
+.str-chat__channel-preview-messenger {
+  @apply border-none !important;
+}

@@ -129,7 +129,12 @@ export default async function ListingDetailPage({
               </div>
             </div>
 
-            <MessageSellerCta sellerName={listing.seller.name} />
+            <MessageSellerCta
+              sellerName={listing.seller.name}
+              sellerId={listing.seller.id}
+              listingId={id}
+              listingTitle={listing.title}
+            />
 
             <div className="mt-4">
               <h2 className="text-sm font-bold text-text-primary">Description</h2>

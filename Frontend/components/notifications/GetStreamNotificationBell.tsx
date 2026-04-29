@@ -209,8 +209,9 @@ export default function GetStreamNotificationBell({ userId }: Props) {
   const handleItemClick = useCallback(
     (item: NotificationItem) => {
       setOpen(false);
-      const cid = encodeURIComponent(item.channelCid);
-      router.push(`/messages?cid=${cid}`);
+      // channelCid looks like "messaging:channelId" — our canonical route is /messages/[channelId]
+      const [, channelId] = item.channelCid.split(":", 2);
+      router.push(`/messages/${encodeURIComponent(channelId || item.channelCid)}`);
     },
     [router]
   );
