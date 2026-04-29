@@ -38,6 +38,7 @@ export default function ChatView({
   showChat = true 
 }: ChatViewProps) {
   const [client, setClient] = useState<StreamChat | null>(null);
+  const [isActiveChannelReady, setIsActiveChannelReady] = useState(false);
   const connectingRef = useRef(false);
 
   const apiKey = process.env.NEXT_PUBLIC_GETSTREAM_API_KEY?.trim() ?? "";
@@ -102,6 +103,31 @@ export default function ChatView({
     return client.channel("messaging", activeChannelId);
   }, [client, activeChannelId]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function ensureChannelReady() {
+      if (!activeChannel) {
+        setIsActiveChannelReady(false);
+        return;
+      }
+
+      setIsActiveChannelReady(false);
+      try {
+        await activeChannel.watch();
+        if (!cancelled) setIsActiveChannelReady(true);
+      } catch (error) {
+        console.error("[ChatView] Failed to watch active channel:", error);
+        if (!cancelled) setIsActiveChannelReady(false);
+      }
+    }
+
+    void ensureChannelReady();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeChannel?.cid]);
+
   if (!client) {
     return (
       <div className="flex h-[600px] items-center justify-center rounded-card border border-border bg-card">
@@ -129,15 +155,21 @@ export default function ChatView({
             <div className={`flex h-full flex-1 flex-col overflow-hidden bg-surface ${!showSidebar ? "w-full" : ""}`}>
               <ComponentProvider value={{}}>
                 {activeChannel ? (
-                  <Channel channel={activeChannel}>
-                    <WithDragAndDropUpload acceptedFiles={["image/*"]}>
-                      <Window>
-                        <MessageList />
-                        <MessageComposer />
-                      </Window>
-                    </WithDragAndDropUpload>
-                    <Thread />
-                  </Channel>
+                  isActiveChannelReady ? (
+                    <Channel key={activeChannel.cid} channel={activeChannel}>
+                      <WithDragAndDropUpload acceptedFiles={["image/*"]}>
+                        <Window>
+                          <MessageList />
+                          <MessageComposer />
+                        </Window>
+                      </WithDragAndDropUpload>
+                      <Thread />
+                    </Channel>
+                  ) : (
+                    <div className="flex flex-1 items-center justify-center">
+                      <LoadingIndicator />
+                    </div>
+                  )
                 ) : (
                   <div className="flex flex-1 items-center justify-center text-text-muted">
                     <div className="text-center px-6">
