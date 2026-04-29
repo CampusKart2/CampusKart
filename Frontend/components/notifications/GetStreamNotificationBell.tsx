@@ -141,7 +141,7 @@ export default function GetStreamNotificationBell({ userId }: Props) {
     }
 
     let cancelled = false;
-    const client = StreamChat.getInstance(apiKey);
+    const client = new StreamChat(apiKey);
     clientRef.current = client;
 
     async function connect(): Promise<void> {
@@ -209,8 +209,9 @@ export default function GetStreamNotificationBell({ userId }: Props) {
   const handleItemClick = useCallback(
     (item: NotificationItem) => {
       setOpen(false);
-      const cid = encodeURIComponent(item.channelCid);
-      router.push(`/messages?cid=${cid}`);
+      // channelCid looks like "messaging:channelId" — our canonical route is /messages/[channelId]
+      const [, channelId] = item.channelCid.split(":", 2);
+      router.push(`/messages/${encodeURIComponent(channelId || item.channelCid)}`);
     },
     [router]
   );

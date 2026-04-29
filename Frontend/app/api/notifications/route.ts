@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireSession } from "@/lib/auth";
-import { query } from "@/lib/db";
+import { pool } from "@/lib/db";
 import {
   notificationsListResponseSchema,
   notificationsQuerySchema,
@@ -17,6 +17,12 @@ type DbRow = {
   channel_type: string;
   channel_id: string;
 };
+
+type PgError = Error & { code?: string };
+
+function isUndefinedTableError(error: unknown): error is PgError {
+  return error instanceof Error && (error as PgError).code === "42P01";
+}
 
 /**
  * GET /api/notifications?limit=10
@@ -54,14 +60,24 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     const { limit } = parsedQuery.data;
 
-    const rows = await query<DbRow>(
-      `SELECT id, sender_display_name, snippet, created_at, channel_type, channel_id
-       FROM message_notification_feed
-       WHERE recipient_user_id = $1::uuid
-       ORDER BY created_at DESC
-       LIMIT $2`,
-      [session.userId, limit]
-    );
+    let rows: DbRow[];
+    try {
+      const result = await pool.query<DbRow>(
+        `SELECT id, sender_display_name, snippet, created_at, channel_type, channel_id
+         FROM message_notification_feed
+         WHERE recipient_user_id = $1::uuid
+         ORDER BY created_at DESC
+         LIMIT $2`,
+        [session.userId, limit]
+      );
+      rows = result.rows;
+    } catch (error) {
+      if (isUndefinedTableError(error)) {
+        const body = notificationsListResponseSchema.parse({ notifications: [] });
+        return NextResponse.json(body, { status: 200 });
+      }
+      throw error;
+    }
 
     const notifications = rows.map((row) => ({
       id: row.id,

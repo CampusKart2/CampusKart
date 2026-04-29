@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { StreamChat } from "stream-chat";
 
 import { requireSession } from "@/lib/auth";
+import { query } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +32,20 @@ export async function POST(): Promise<NextResponse> {
       );
     }
 
+    const userResult = await query<{ full_name: string }>(
+      "SELECT full_name FROM users WHERE id = $1",
+      [session.userId]
+    );
+    const fullName = userResult[0]?.full_name || session.email.split("@")[0];
+
     const serverClient = StreamChat.getInstance(apiKey, apiSecret);
+    
+    // Sync user info to Stream so names appear in chat
+    await serverClient.upsertUser({
+      id: session.userId,
+      name: fullName,
+    });
+
     const token = serverClient.createToken(session.userId);
 
     return NextResponse.json({ token }, { status: 200 });
