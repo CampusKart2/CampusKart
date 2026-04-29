@@ -47,7 +47,7 @@ export default function ChatView({
     if (!apiKey || !userId || connectingRef.current) return;
 
     let cancelled = false;
-    const chatClient = StreamChat.getInstance(apiKey);
+    const chatClient = new StreamChat(apiKey);
 
     async function initChat() {
       if (connectingRef.current) return;
