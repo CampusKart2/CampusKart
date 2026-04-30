@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import SellerProfileView from "@/components/sellers/SellerProfileView";
+import { getSession } from "@/lib/auth";
+import { hasUserBlocked } from "@/lib/blocking";
 import { fetchSellerProfile } from "@/lib/seller-profile";
 import {
   sellerProfileQuerySchema,
@@ -40,10 +42,26 @@ export default async function SellerProfilePage({
 
   const userId = parsedParams.data.id;
 
-  const data = await fetchSellerProfile(userId, { page, limit });
+  const [data, session] = await Promise.all([
+    fetchSellerProfile(userId, { page, limit }),
+    getSession(),
+  ]);
   if (!data) {
     notFound();
   }
 
-  return <SellerProfileView userId={userId} data={data} />;
+  const viewerUserId = session?.userId ?? null;
+  const initialIsBlocked =
+    viewerUserId && viewerUserId !== userId
+      ? await hasUserBlocked(viewerUserId, userId)
+      : false;
+
+  return (
+    <SellerProfileView
+      userId={userId}
+      data={data}
+      viewerUserId={viewerUserId}
+      initialIsBlocked={initialIsBlocked}
+    />
+  );
 }
