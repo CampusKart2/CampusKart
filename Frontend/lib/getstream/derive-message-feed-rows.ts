@@ -28,29 +28,34 @@ const messageSchema = z
   })
   .passthrough();
 
+const memberSchema = z
+  .object({
+    user_id: z.string().optional(),
+    user: streamUserSchema.optional(),
+  })
+  .passthrough();
+
+const membersSchema = z.union([
+  z.record(z.string(), memberSchema),
+  z.array(memberSchema),
+]);
+
 const channelSchema = z
   .object({
     type: z.string().optional(),
     id: z.string().optional(),
     cid: z.string().optional(),
-    members: z
-      .record(
-        z.string(),
-        z
-          .object({
-            user: streamUserSchema.optional(),
-          })
-          .passthrough()
-      )
-      .optional(),
+    members: membersSchema.optional(),
   })
   .passthrough();
 
 const messageEventPayloadSchema = z
   .object({
+    cid: z.string().optional(),
     user: streamUserSchema.optional(),
     message: messageSchema.optional(),
     channel: channelSchema.optional(),
+    members: membersSchema.optional(),
   })
   .passthrough();
 
@@ -63,12 +68,13 @@ function truncateSnippet(text: string): string {
 }
 
 function parseChannelTypeId(
-  channel: z.infer<typeof channelSchema>
+  channel: z.infer<typeof channelSchema> | null,
+  fallbackCid?: string
 ): { channelType: string; channelId: string } | null {
-  if (channel.type && channel.id) {
+  if (channel?.type && channel.id) {
     return { channelType: channel.type, channelId: channel.id };
   }
-  const cid = channel.cid;
+  const cid = channel?.cid ?? fallbackCid;
   if (typeof cid === "string" && cid.includes(":")) {
     const idx = cid.indexOf(":");
     const channelType = cid.slice(0, idx);
@@ -78,6 +84,35 @@ function parseChannelTypeId(
     }
   }
   return null;
+}
+
+function collectRecipientIds(
+  members: z.infer<typeof membersSchema>,
+  senderStreamUserId: string
+): Set<string> {
+  const recipientIds = new Set<string>();
+
+  if (Array.isArray(members)) {
+    for (const entry of members) {
+      const uid = entry.user?.id ?? entry.user_id;
+      if (typeof uid === "string" && UUID_RE.test(uid) && uid !== senderStreamUserId) {
+        recipientIds.add(uid);
+      }
+    }
+    return recipientIds;
+  }
+
+  for (const [key, entry] of Object.entries(members)) {
+    if (UUID_RE.test(key) && key !== senderStreamUserId) {
+      recipientIds.add(key);
+    }
+    const uid = entry.user?.id ?? entry.user_id;
+    if (typeof uid === "string" && UUID_RE.test(uid) && uid !== senderStreamUserId) {
+      recipientIds.add(uid);
+    }
+  }
+
+  return recipientIds;
 }
 
 /**
@@ -103,18 +138,10 @@ export function deriveMessageFeedRows(
   }
 
   const p = parsed.data;
-  const channel = p.channel;
-  if (!channel) {
-    return [];
-  }
+  const typed = p.channel ? channelSchema.safeParse(p.channel) : null;
+  const ch = typed?.success ? typed.data : null;
 
-  const typed = channelSchema.safeParse(channel);
-  if (!typed.success) {
-    return [];
-  }
-
-  const ch = typed.data;
-  const ids = parseChannelTypeId(ch);
+  const ids = parseChannelTypeId(ch, p.cid);
   if (!ids) {
     return [];
   }
@@ -145,22 +172,12 @@ export function deriveMessageFeedRows(
   const snippet =
     rawText.trim().length > 0 ? truncateSnippet(rawText) : "(no text)";
 
-  const members = ch.members;
-  if (!members || typeof members !== "object") {
+  const members = p.members ?? ch?.members;
+  if (!members) {
     return [];
   }
 
-  const recipientIds = new Set<string>();
-  for (const key of Object.keys(members)) {
-    if (UUID_RE.test(key) && key !== senderStreamUserId) {
-      recipientIds.add(key);
-    }
-    const entry = members[key];
-    const uid = entry?.user?.id;
-    if (typeof uid === "string" && UUID_RE.test(uid) && uid !== senderStreamUserId) {
-      recipientIds.add(uid);
-    }
-  }
+  const recipientIds = collectRecipientIds(members, senderStreamUserId);
 
   const rows: MessageFeedInsert[] = [];
   for (const recipientUserId of recipientIds) {
