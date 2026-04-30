@@ -13,7 +13,7 @@ type DbRow = {
   id: string;
   sender_display_name: string;
   snippet: string;
-  created_at: string;
+  created_at: Date | string;
   channel_type: string;
   channel_id: string;
 };
@@ -22,6 +22,10 @@ type PgError = Error & { code?: string };
 
 function isUndefinedTableError(error: unknown): error is PgError {
   return error instanceof Error && (error as PgError).code === "42P01";
+}
+
+function toIsoString(value: Date | string): string {
+  return value instanceof Date ? value.toISOString() : value;
 }
 
 /**
@@ -83,7 +87,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       id: row.id,
       senderName: row.sender_display_name,
       snippet: row.snippet,
-      createdAt: row.created_at,
+      createdAt: toIsoString(row.created_at),
       channelCid: `${row.channel_type}:${row.channel_id}`,
     }));
 
