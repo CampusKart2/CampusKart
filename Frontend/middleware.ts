@@ -25,6 +25,7 @@ const AUTH_ONLY_PAGES = ["/login", "/signup"];
 const AUTH_REQUIRED_PAGES = [
   "/search",
   "/listings",
+  "/sellers",
   "/chat",
   "/messages",
   "/saves",
@@ -159,6 +160,7 @@ export const config = {
     // Auth-required pages
     "/search/:path*",
     "/listings/:path*",
+    "/sellers/:path*",
     "/chat/:path*",
     "/messages/:path*",
     "/saves/:path*",

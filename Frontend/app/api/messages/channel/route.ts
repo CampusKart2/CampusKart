@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { requireSession } from "@/lib/auth";
+import { hasBlockingRelation } from "@/lib/blocking";
 import { query } from "@/lib/db";
 import { getStreamServerClient } from "@/lib/stream";
 
@@ -62,6 +63,14 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     if (buyerId === sellerId) {
       return NextResponse.json({ error: "You cannot message yourself." }, { status: 400 });
+    }
+
+    const blocked = await hasBlockingRelation(buyerId, sellerId);
+    if (blocked) {
+      return NextResponse.json(
+        { error: "Messaging is unavailable because one user has blocked the other." },
+        { status: 403 }
+      );
     }
 
     const { client: serverClient } = getStreamServerClient();
