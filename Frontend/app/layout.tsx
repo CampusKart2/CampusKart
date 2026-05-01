@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Navbar from "@/components/ui/Navbar";
 import UnverifiedEmailBanner from "@/components/ui/UnverifiedEmailBanner";
+import ReviewPromptChecker from "@/components/sellers/ReviewPromptChecker";
 import { getSession } from "@/lib/auth";
 import "./globals.css";
 import "stream-chat-react/dist/css/index.css";
@@ -25,6 +26,7 @@ export default async function RootLayout({
   // getSession() is cheap — it only decodes the cookie; no DB call.
   const session = await getSession();
   const showBanner = session !== null && !session.emailVerified;
+  const isAuthenticated = session !== null;
 
   return (
     <html lang="en" className={inter.variable}>
@@ -32,6 +34,8 @@ export default async function RootLayout({
         <Navbar />
         {/* T-12: amber warning banner for logged-in users whose email is unverified */}
         {showBanner && <UnverifiedEmailBanner />}
+        {/* T-79: show review modal 24h after a purchase is marked sold */}
+        {isAuthenticated && <ReviewPromptChecker />}
         {children}
       </body>
     </html>
