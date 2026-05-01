@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "test:blocking-api": "node scripts/test-blocking-api.js",
     "check:supabase": "node scripts/check-supabase.js",
     "check:notifications": "node scripts/check-notifications.js",
     "webhook:configure": "node scripts/configure-getstream-webhook.js",

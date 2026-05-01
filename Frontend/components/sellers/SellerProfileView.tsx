@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import ListingCard from "@/components/listings/ListingCard";
+import SellerProfileActionMenu from "@/components/sellers/SellerProfileActionMenu";
 import SellerRatingStars from "@/components/sellers/SellerRatingStars";
 import type { Listing } from "@/lib/types/listing";
 import type { SellerProfileApiResponse } from "@/lib/types/seller-profile";
@@ -9,6 +10,8 @@ import type { SellerProfileApiResponse } from "@/lib/types/seller-profile";
 interface SellerProfileViewProps {
   userId: string;
   data: SellerProfileApiResponse;
+  viewerUserId: string | null;
+  initialIsBlocked: boolean;
 }
 
 function initialsFromName(name: string): string {
@@ -33,10 +36,16 @@ function buildPageHref(sellerId: string, page: number): string {
   return `${path}?page=${page}`;
 }
 
-export default function SellerProfileView({ userId, data }: SellerProfileViewProps) {
+export default function SellerProfileView({
+  userId,
+  data,
+  viewerUserId,
+  initialIsBlocked,
+}: SellerProfileViewProps) {
   const { profile, pagination } = data;
   const { name, avatar_url, rating, join_date, listings } = profile;
   const { page, limit, total, total_pages } = pagination;
+  const canManageBlock = viewerUserId !== null && viewerUserId !== userId;
 
   const listingCards: Listing[] = listings.map((item) => ({
     id: item.id,
@@ -91,9 +100,18 @@ export default function SellerProfileView({ userId, data }: SellerProfileViewPro
             </div>
 
             <div className="flex-1 min-w-0 text-center sm:text-left">
-              <h1 className="text-2xl sm:text-3xl font-bold text-text-primary break-words">
-                {name}
-              </h1>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <h1 className="text-2xl sm:text-3xl font-bold text-text-primary break-words">
+                  {name}
+                </h1>
+                {canManageBlock ? (
+                  <SellerProfileActionMenu
+                    sellerId={userId}
+                    sellerName={name}
+                    initialIsBlocked={initialIsBlocked}
+                  />
+                ) : null}
+              </div>
               <div className="mt-3 flex justify-center sm:justify-start">
                 <SellerRatingStars average={rating.average} count={rating.count} />
               </div>
