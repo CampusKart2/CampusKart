@@ -8,6 +8,11 @@ const paramsSchema = z.object({
   id: z.string().uuid("Listing id must be a valid UUID."),
 });
 
+/** Optional body: seller can record which user bought the item. */
+const soldBodySchema = z.object({
+  buyerId: z.string().uuid("Buyer id must be a valid UUID.").optional(),
+});
+
 type DbSoldListingRow = {
   id: string;
   status: ListingStatus;
@@ -17,9 +22,10 @@ type DbSoldListingRow = {
  * PATCH /api/listings/:id/sold
  *
  * Marks a listing as sold. Only the listing owner may perform this action.
+ * Optionally records the buyer (buyerId in JSON body) and stamps sold_at.
  */
 export async function PATCH(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   let session: Awaited<ReturnType<typeof requireSession>>;
@@ -49,6 +55,26 @@ export async function PATCH(
   }
 
   const { id } = parsedParams.data;
+
+  // Parse optional body (buyer_id for review-prompt tracking)
+  let buyerId: string | undefined;
+  try {
+    const contentType = request.headers.get("content-type") ?? "";
+    if (contentType.includes("application/json")) {
+      const rawBody: unknown = await request.json();
+      const parsedBody = soldBodySchema.safeParse(rawBody);
+      if (!parsedBody.success) {
+        return NextResponse.json(
+          { error: "Validation failed.", fields: parsedBody.error.issues },
+          { status: 400 }
+        );
+      }
+      buyerId = parsedBody.data.buyerId;
+    }
+  } catch {
+    // Body is optional — ignore parse errors
+  }
+
   const client = await pool.connect();
 
   try {
@@ -89,11 +115,14 @@ export async function PATCH(
     const updateResult = await client.query<DbSoldListingRow>(
       `
       UPDATE listings
-      SET status = 'sold', updated_at = NOW()
+      SET status     = 'sold',
+          sold_at    = NOW(),
+          buyer_id   = $2,
+          updated_at = NOW()
       WHERE id = $1
       RETURNING id, status
       `,
-      [id]
+      [id, buyerId ?? null]
     );
 
     await client.query("COMMIT");
