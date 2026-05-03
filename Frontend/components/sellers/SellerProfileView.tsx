@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import ListingCard from "@/components/listings/ListingCard";
+import ReviewForm from "@/components/sellers/ReviewForm";
 import SellerProfileActionMenu from "@/components/sellers/SellerProfileActionMenu";
 import SellerRatingStars from "@/components/sellers/SellerRatingStars";
 import type { Listing } from "@/lib/types/listing";
@@ -188,6 +189,19 @@ export default function SellerProfileView({
             </nav>
           )}
         </section>
+
+        {/* Review form — only visible to logged-in users who are not the seller */}
+        {viewerUserId !== null && viewerUserId !== userId && (
+          <section aria-labelledby="leave-review-heading" className="mt-8">
+            <h2
+              id="leave-review-heading"
+              className="text-xl font-bold text-text-primary mb-4"
+            >
+              Leave a Review
+            </h2>
+            <ReviewForm sellerId={userId} sellerName={name} />
+          </section>
+        )}
       </div>
     </div>
   );

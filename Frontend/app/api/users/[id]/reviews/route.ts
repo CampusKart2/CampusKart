@@ -13,7 +13,7 @@ type ReviewRow = {
   reviewer_id: string;
   seller_id: string;
   rating: number;
-  comment: string | null;
+  body: string | null;
   created_at: string;
 };
 
@@ -88,12 +88,13 @@ export async function POST(
   }
 
   // --- Insert review (unique constraint enforces one-per-pair) ---
+  // The DB column is named 'body' (not 'comment') per the live schema.
   try {
     const rows = await query<ReviewRow>(
       `
-      INSERT INTO reviews (reviewer_id, seller_id, rating, comment)
+      INSERT INTO reviews (reviewer_id, seller_id, rating, body)
       VALUES ($1, $2, $3, $4)
-      RETURNING id, reviewer_id, seller_id, rating, comment, created_at
+      RETURNING id, reviewer_id, seller_id, rating, body, created_at
       `,
       [reviewerId, sellerId, rating, comment ?? null]
     );
@@ -105,7 +106,7 @@ export async function POST(
           reviewerId: rows[0].reviewer_id,
           sellerId: rows[0].seller_id,
           rating: rows[0].rating,
-          comment: rows[0].comment,
+          comment: rows[0].body,
           createdAt: rows[0].created_at,
         },
       },
