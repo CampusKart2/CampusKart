@@ -17,6 +17,14 @@ export const sellerProfileQuerySchema = z.object({
 });
 
 /**
+ * Querystring for GET /api/users/:id/reviews.
+ * Reviews are fixed at 10 per page by the API contract.
+ */
+export const userReviewsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+});
+
+/**
  * Request body for POST /api/users/:id/reviews.
  */
 export const createReviewBodySchema = z.object({

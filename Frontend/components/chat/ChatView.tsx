@@ -90,16 +90,22 @@ export default function ChatView({
 
     return () => {
       cancelled = true;
-      if (chatClient) {
-        chatClient.disconnectUser();
-      }
       setClient(null);
       connectingRef.current = false;
+
+      // Let React unmount stream-chat-react channel consumers before Stream marks
+      // active Channel objects as disconnected. Otherwise SDK cleanup can touch a
+      // channel after client.disconnectUser() and throw in development.
+      setTimeout(() => {
+        void chatClient.disconnectUser().catch(() => {
+          /* Stream may already be disconnected during fast route changes. */
+        });
+      }, 0);
     };
   }, [apiKey, userId]);
 
   const activeChannel = useMemo(() => {
-    if (!client || !activeChannelId) return null;
+    if (!client?.userID || !activeChannelId) return null;
     return client.channel("messaging", activeChannelId);
   }, [client, activeChannelId]);
 
@@ -126,7 +132,7 @@ export default function ChatView({
     return () => {
       cancelled = true;
     };
-  }, [activeChannel?.cid]);
+  }, [activeChannel]);
 
   if (!client) {
     return (

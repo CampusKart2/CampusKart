@@ -4,10 +4,11 @@ import { notFound } from "next/navigation";
 import SellerProfileView from "@/components/sellers/SellerProfileView";
 import { getSession } from "@/lib/auth";
 import { hasUserBlocked } from "@/lib/blocking";
-import { fetchSellerProfile } from "@/lib/seller-profile";
+import { fetchSellerProfile, fetchSellerReviews } from "@/lib/seller-profile";
 import {
   sellerProfileQuerySchema,
   userIdParamsSchema,
+  userReviewsQuerySchema,
 } from "@/lib/validators/users";
 
 export const metadata: Metadata = {
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
 
 interface SellerProfilePageProps {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ page?: string; limit?: string }>;
+  searchParams: Promise<{ page?: string; limit?: string; reviewsPage?: string }>;
 }
 
 export default async function SellerProfilePage({
@@ -40,13 +41,21 @@ export default async function SellerProfilePage({
     ? parsedQuery.data
     : { page: 1, limit: 12 };
 
+  const parsedReviewsQuery = userReviewsQuerySchema.safeParse({
+    page: rawSearch.reviewsPage,
+  });
+  const reviewsPage = parsedReviewsQuery.success
+    ? parsedReviewsQuery.data.page
+    : 1;
+
   const userId = parsedParams.data.id;
 
-  const [data, session] = await Promise.all([
+  const [data, reviewsData, session] = await Promise.all([
     fetchSellerProfile(userId, { page, limit }),
+    fetchSellerReviews(userId, { page: reviewsPage }),
     getSession(),
   ]);
-  if (!data) {
+  if (!data || !reviewsData) {
     notFound();
   }
 
@@ -60,6 +69,7 @@ export default async function SellerProfilePage({
     <SellerProfileView
       userId={userId}
       data={data}
+      reviewsData={reviewsData}
       viewerUserId={viewerUserId}
       initialIsBlocked={initialIsBlocked}
     />
