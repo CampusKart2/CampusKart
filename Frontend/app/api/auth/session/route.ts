@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { verifySession } from "@/lib/session";
-
-const COOKIE_NAME = "campuskart_session";
+import { getSession } from "@/lib/auth";
 
 // ─── GET /api/auth/session ─────────────────────────────────────────────────────
 //
@@ -14,12 +11,15 @@ const COOKIE_NAME = "campuskart_session";
 //   200  { authenticated: false }   (no 401 — unauthenticated is a valid state)
 
 export async function GET(_req: NextRequest): Promise<NextResponse> {
-  const store = await cookies();
-  const raw = store.get(COOKIE_NAME)?.value ?? "";
-  const session = raw ? await verifySession(raw) : null;
+  const session = await getSession();
 
   if (!session) {
-    return NextResponse.json({ authenticated: false }, { status: 200 });
+    const response = NextResponse.json(
+      { authenticated: false },
+      { status: 200 }
+    );
+    response.cookies.delete("campuskart_session");
+    return response;
   }
 
   return NextResponse.json(
