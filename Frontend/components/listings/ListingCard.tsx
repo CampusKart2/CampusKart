@@ -1,18 +1,31 @@
 import Link from "next/link";
 import Image from "next/image";
+import { Camera } from "lucide-react";
 import type { Listing, NearbyListing } from "@/lib/types/listing";
 import ConditionBadge from "@/components/listings/ConditionBadge";
 import SoldBannerOverlay from "@/components/listings/SoldBannerOverlay";
+import SellerRatingStars from "@/components/sellers/SellerRatingStars";
 
 interface ListingCardProps {
   listing: Listing | NearbyListing;
 }
 
 export default function ListingCard({ listing }: ListingCardProps) {
-  const { id, title, price, condition, category, thumbnail_url, status } = listing;
+  const {
+    id,
+    title,
+    price,
+    condition,
+    category,
+    thumbnail_url,
+    status,
+    seller_average_rating,
+    seller_rating_count,
+  } = listing;
   const distanceLabel =
     "distance_miles" in listing ? `${listing.distance_miles.toFixed(1)} mi away` : null;
   const isSold = status === "sold";
+  const sellerRatingCount = seller_rating_count ?? 0;
 
   return (
     <Link
@@ -20,31 +33,19 @@ export default function ListingCard({ listing }: ListingCardProps) {
       className="group block bg-card rounded-card shadow-card hover:shadow-card-hover hover:scale-[1.01] transition-all duration-200 overflow-hidden"
     >
       {/* Thumbnail — 16:9 */}
-      <div className="relative aspect-video w-full bg-surface overflow-hidden">
+      <div className="relative aspect-video overflow-hidden rounded-t-lg bg-gray-50">
         {thumbnail_url ? (
           <Image
             src={thumbnail_url}
             alt={title}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 360px"
-            className="object-cover"
+            className="h-full w-full object-cover"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-surface">
-            <svg
-              className="w-10 h-10 text-border"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1.5}
-              aria-hidden="true"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 21h18M3.75 3h16.5A.75.75 0 0121 3.75v16.5a.75.75 0 01-.75.75H3.75A.75.75 0 013 20.25V3.75A.75.75 0 013.75 3z"
-              />
-            </svg>
+          <div className="flex h-full w-full items-center justify-center bg-gray-100 text-gray-400">
+            <Camera className="h-10 w-10" strokeWidth={1.5} aria-hidden="true" />
+            <span className="sr-only">No listing photo available</span>
           </div>
         )}
 
@@ -73,6 +74,14 @@ export default function ListingCard({ listing }: ListingCardProps) {
         <p className="mt-0.5 text-sm font-semibold text-text-primary line-clamp-2 leading-snug">
           {title}
         </p>
+
+        <SellerRatingStars
+          average={seller_average_rating ?? 0}
+          count={sellerRatingCount}
+          size="sm"
+          showAverage={sellerRatingCount > 0}
+          className="mt-1 min-h-5"
+        />
 
         {/* Bottom row: condition badge + category */}
         <div className="mt-1.5 flex items-center justify-between gap-2">

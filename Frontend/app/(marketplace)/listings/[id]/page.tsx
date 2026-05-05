@@ -71,11 +71,13 @@ export default async function ListingDetailPage({
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           {/* Images */}
-          <ListingImageCarousel
-            images={images}
-            title={listing.title}
-            isSold={listing.status === "sold"}
-          />
+          <div className="h-80 overflow-hidden rounded-card">
+            <ListingImageCarousel
+              images={images}
+              title={listing.title}
+              isSold={listing.status === "sold"}
+            />
+          </div>
 
           {/* Details */}
           <div className="bg-card border border-border rounded-card shadow-card p-4 sm:p-6">

@@ -105,6 +105,8 @@ export default function SellerProfileView({
     category: item.category,
     thumbnail_url: item.thumbnail_url,
     seller_id: userId,
+    seller_average_rating: rating.average,
+    seller_rating_count: rating.count,
     created_at: item.created_at,
     view_count: item.view_count,
   }));
@@ -217,7 +219,7 @@ export default function SellerProfileView({
                   count={reviewsData.ratingCount}
                 />
                 <p className="text-sm text-text-secondary">
-                  Based on {reviewsData.ratingCount} review
+                  Based on {reviewsData.ratingCount} rating
                   {reviewsData.ratingCount === 1 ? "" : "s"}
                 </p>
               </div>

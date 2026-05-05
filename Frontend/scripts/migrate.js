@@ -5,6 +5,10 @@ const { Client } = require("pg");
 const MIGRATIONS_DIR = path.resolve(process.cwd(), "db", "migrations");
 const MIGRATIONS_TABLE = "schema_migrations";
 
+function isStatusCommand() {
+  return process.argv.slice(2).some((arg) => arg === "status" || arg === "--status");
+}
+
 function loadEnvFile() {
   for (const fileName of [".env.local", ".env"]) {
     const envPath = path.resolve(process.cwd(), fileName);
@@ -206,7 +210,7 @@ async function main() {
   try {
     await ensureMigrationsTable(client);
 
-    if (process.argv.includes("--status")) {
+    if (isStatusCommand()) {
       await showStatus(client, files);
       return;
     }
@@ -238,6 +242,22 @@ async function main() {
 
 main().catch((err) => {
   console.error("Database migration failed.");
-  console.error(err && err.message ? err.message : err);
+  if (err && err.message) {
+    console.error(err.message);
+    if (err.code) {
+      console.error(`Postgres code: ${err.code}`);
+    }
+    if (err.detail) {
+      console.error(`Detail: ${err.detail}`);
+    }
+    if (err.hint) {
+      console.error(`Hint: ${err.hint}`);
+    }
+    if (err.position) {
+      console.error(`Position: ${err.position}`);
+    }
+  } else {
+    console.error(err);
+  }
   process.exit(1);
 });
