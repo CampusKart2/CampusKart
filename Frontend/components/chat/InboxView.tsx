@@ -27,7 +27,7 @@ function ActiveChannelWatcher({
     if (pendingNavigationToIdRef.current !== id) return;
     pendingNavigationToIdRef.current = null;
     router.push(`/messages/${id}`);
-  }, [activeChannel?.id, router]);
+  }, [activeChannel?.id, pendingNavigationToIdRef, router]);
 
   return null;
 }

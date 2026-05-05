@@ -23,16 +23,13 @@ interface EmailClient {
   transporter: Transporter;
 }
 
-const REQUIRED_ENV_VARS = [
-  "SMTP_HOST",
-  "SMTP_PORT",
-  "SMTP_USER",
-  "SMTP_PASS",
-  "EMAIL_FROM",
-  "NEXT_PUBLIC_BASE_URL",
-] as const;
-
-type RequiredEnvVar = (typeof REQUIRED_ENV_VARS)[number];
+type RequiredEnvVar =
+  | "SMTP_HOST"
+  | "SMTP_PORT"
+  | "SMTP_USER"
+  | "SMTP_PASS"
+  | "EMAIL_FROM"
+  | "NEXT_PUBLIC_BASE_URL";
 
 function getRequiredEnv(name: RequiredEnvVar): string {
   const value = process.env[name]?.trim();

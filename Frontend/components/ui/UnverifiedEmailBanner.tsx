@@ -7,7 +7,7 @@ type ResendState = "idle" | "pending" | "sent" | "error";
 export default function UnverifiedEmailBanner() {
   const [resendState, setResendState] = useState<ResendState>("idle");
   const [dismissed, setDismissed] = useState(false);
-  const [_isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   if (dismissed) return null;
 

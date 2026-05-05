@@ -25,7 +25,7 @@ async function requestJson({ method, url, cookie, body }) {
   let json = null;
   try {
     json = await response.json();
-  } catch (_error) {
+  } catch {
     // Non-JSON response is fine for status-only checks.
   }
 

@@ -82,8 +82,6 @@ export async function signupAction(
   _prevState: string | null,
   formData: FormData
 ): Promise<string | null> {
-  const from = (formData.get("from") as string) || "/";
-
   const parsed = signupSchema.safeParse({
     full_name: (formData.get("full_name") as string ?? "").trim(),
     // Normalize to lowercase so duplicate-email check and DB unique constraint

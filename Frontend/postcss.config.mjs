@@ -1,4 +1,4 @@
-export default {
+const config = {
 
   plugins: {
 
@@ -9,4 +9,6 @@ export default {
   },
 
 }
+
+export default config;
  
