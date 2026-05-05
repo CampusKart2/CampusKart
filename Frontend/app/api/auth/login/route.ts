@@ -70,8 +70,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       full_name: string;
       password_hash: string;
       email_verified: boolean;
+      is_active: boolean;
     }>(
-      `SELECT id, full_name, password_hash, email_verified FROM users WHERE email = $1 LIMIT 1`,
+      `SELECT id, full_name, password_hash, email_verified, is_active FROM users WHERE email = $1 LIMIT 1`,
       [email]
     );
     const user = rows[0];
@@ -87,6 +88,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       return NextResponse.json(
         { error: "Invalid email or password." },
         { status: 401 }
+      );
+    }
+
+    if (!user.is_active) {
+      return NextResponse.json(
+        {
+          error:
+            "Your account is banned. Please contact us at admincampuskart@gmail.com.",
+        },
+        { status: 403 }
       );
     }
 

@@ -55,8 +55,9 @@ export async function loginAction(
     id: string;
     password_hash: string;
     email_verified: boolean;
+    is_active: boolean;
   }>(
-    `SELECT id, password_hash, email_verified FROM users WHERE email = $1 LIMIT 1`,
+    `SELECT id, password_hash, email_verified, is_active FROM users WHERE email = $1 LIMIT 1`,
     [email]
   );
 
@@ -65,6 +66,10 @@ export async function loginAction(
 
   if (!user || !isValid) {
     return "Invalid email or password.";
+  }
+
+  if (!user.is_active) {
+    return "Your account is banned. Please contact us at admincampuskart@gmail.com.";
   }
 
   await setSessionCookie(user.id, email, user.email_verified);

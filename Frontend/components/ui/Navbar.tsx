@@ -2,6 +2,7 @@ import Link from "next/link";
 import GetStreamNotificationBell from "@/components/notifications/GetStreamNotificationBell";
 import { logoutAction } from "@/app/(auth)/actions";
 import { getSession } from "@/lib/auth";
+import { ADMIN_EMAIL } from "@/lib/admin";
 import MobileMenu from "./MobileMenu";
 import NavbarSearchBar from "./NavbarSearchBar";
 
@@ -9,6 +10,7 @@ export default async function Navbar() {
   // getSession() now returns SessionPayload | null
   const session = await getSession();
   const isLoggedIn = session !== null;
+  const isAdmin = session?.email.toLowerCase() === ADMIN_EMAIL;
 
   return (
     <header className="sticky top-0 z-50 bg-card border-b border-border">
@@ -40,6 +42,20 @@ export default async function Navbar() {
               >
                 + Sell
               </Link>
+              <Link
+                href="/profile"
+                className="px-4 py-2 text-sm font-semibold text-text-primary border border-border rounded-button hover:bg-surface transition"
+              >
+                Profile
+              </Link>
+              {isAdmin ? (
+                <Link
+                  href="/admin"
+                  className="px-4 py-2 text-sm font-semibold text-white bg-danger rounded-button hover:opacity-90 transition"
+                >
+                  Admin
+                </Link>
+              ) : null}
               {/* T-13: Logout button — clearly bordered so it reads as a button */}
               <form action={logoutAction}>
                 <button

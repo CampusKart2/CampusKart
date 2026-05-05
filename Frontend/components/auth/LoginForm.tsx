@@ -160,9 +160,17 @@ export default function LoginForm({ from }: Props) {
 
         {/* ── Password ── */}
         <div className="space-y-1.5">
-          <label htmlFor="password" className="block text-sm font-medium text-text-primary">
-            Password
-          </label>
+          <div className="flex items-center justify-between gap-3">
+            <label htmlFor="password" className="block text-sm font-medium text-text-primary">
+              Password
+            </label>
+            <Link
+              href="/forgot-password"
+              className="text-xs font-semibold text-primary hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
           <div className="relative">
             <input
               id="password"
