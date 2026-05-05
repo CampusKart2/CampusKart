@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 
 // ─── GET /api/auth/session ─────────────────────────────────────────────────────
@@ -10,7 +10,7 @@ import { getSession } from "@/lib/auth";
 //   200  { authenticated: true,  userId, email, emailVerified }
 //   200  { authenticated: false }   (no 401 — unauthenticated is a valid state)
 
-export async function GET(_req: NextRequest): Promise<NextResponse> {
+export async function GET(): Promise<NextResponse> {
   const session = await getSession();
 
   if (!session) {

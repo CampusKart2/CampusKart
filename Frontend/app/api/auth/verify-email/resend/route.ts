@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { randomBytes } from "crypto";
 import { cookies } from "next/headers";
 import { verifySession } from "@/lib/session";
@@ -9,7 +9,7 @@ import { sendVerificationEmail } from "@/lib/email";
 // Re-issues a fresh 24-hour token for the authenticated user.
 // No request body needed — the user is identified from their session cookie.
 
-export async function POST(_req: NextRequest): Promise<NextResponse> {
+export async function POST(): Promise<NextResponse> {
   // 1. Authenticate via session cookie
   const store = await cookies();
   const rawToken = store.get("campuskart_session")?.value ?? "";

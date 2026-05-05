@@ -30,15 +30,7 @@ import {
 } from "lucide-react";
 import ConditionSelector from "@/components/listings/ConditionSelector";
 
-const LISTING_CONDITIONS = [
-  "New",
-  "Like New",
-  "Good",
-  "Fair",
-  "Poor",
-] as const;
-
-type ListingCondition = (typeof LISTING_CONDITIONS)[number];
+type ListingCondition = "New" | "Like New" | "Good" | "Fair" | "Poor";
 
 type Category = {
   slug: string;
@@ -1025,6 +1017,7 @@ export default function CreateListingWizard({
                     className="overflow-hidden rounded-card border border-border bg-surface"
                   >
                     <div className="relative">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={photo.previewUrl}
                         alt={`Listing photo preview ${index + 1}`}
@@ -1158,6 +1151,7 @@ export default function CreateListingWizard({
                       key={index}
                       className="h-32 overflow-hidden rounded-card border border-border bg-surface"
                     >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={url}
                         alt={`Listing photo ${index + 1}`}
