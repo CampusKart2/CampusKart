@@ -75,7 +75,7 @@ async function runTests() {
 
   // 1. Empty query returns latest listings
   {
-    const { status, data } = await api("GET", "/api/listings");
+    const { data } = await api("GET", "/api/listings");
     check("Empty query returns 200", status === 200, { status, data });
     check("Returns listings array", Array.isArray(data?.listings), data);
     check("Returns total count", typeof data?.total === "number", data);
@@ -128,7 +128,7 @@ async function runTests() {
 
   // 6. Deleted/sold listings not in default results
   {
-    const { status, data } = await api("GET", "/api/listings");
+    const { data } = await api("GET", "/api/listings");
     check("No deleted listings in results",
       !data?.listings?.some(l => l.status === "deleted"), data?.listings);
     check("No sold listings in default results",
@@ -247,7 +247,7 @@ async function runTests() {
     // 17. GET /api/listings/:id returns full listing
     let viewCountBefore = 0;
     {
-      const { status, data } = await api("GET", `/api/listings/${KNOWN_LISTING_ID}`);
+      const { data } = await api("GET", `/api/listings/${KNOWN_LISTING_ID}`);
       check("GET /api/listings/:id returns 200", status === 200, { status, data });
       check("Returns listing object", !!data?.listing, data);
       check("Listing has id", !!data?.listing?.id, data?.listing);
@@ -269,7 +269,7 @@ async function runTests() {
 
     // 18. View count increments on first visit (T-31)
     {
-      const { status, data } = await api("GET", `/api/listings/${KNOWN_LISTING_ID}`);
+      const { data } = await api("GET", `/api/listings/${KNOWN_LISTING_ID}`);
       check("Second fetch returns 200", status === 200, { status, data });
       // Note: same session = no increment. Different session = increment.
       // This test just verifies view_count is a valid number
@@ -293,7 +293,7 @@ async function runTests() {
 
     // 21. Listing photos returned (thumbnail_url)
     {
-      const { status, data } = await api("GET", `/api/listings/${KNOWN_LISTING_ID}`);
+      const { data } = await api("GET", `/api/listings/${KNOWN_LISTING_ID}`);
       check("thumbnail_url field exists (null is ok)",
         "thumbnail_url" in (data?.listing ?? {}), data?.listing);
     }

@@ -10,6 +10,8 @@
     "test:blocking-api": "node scripts/test-blocking-api.js",
     "check:supabase": "node scripts/check-supabase.js",
     "check:notifications": "node scripts/check-notifications.js",
+    "db:migrate": "node scripts/migrate.js",
+    "db:migrate:status": "node scripts/migrate.js --status",
     "webhook:configure": "node scripts/configure-getstream-webhook.js",
     "webhook:configure:qa": "node scripts/configure-getstream-webhook-qa.js",
     "webhook:configure:dev": "node scripts/configure-getstream-webhook-dev.js"

@@ -29,6 +29,7 @@ const AUTH_REQUIRED_PAGES = [
   "/chat",
   "/messages",
   "/saves",
+  "/profile",
 ];
 
 /**
@@ -164,6 +165,7 @@ export const config = {
     "/chat/:path*",
     "/messages/:path*",
     "/saves/:path*",
+    "/profile",
     // Verified-required API routes
     "/api/listings/:path*",
     "/api/messages/:path*",

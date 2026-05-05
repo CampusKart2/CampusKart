@@ -8,6 +8,7 @@ interface EmailConfig {
   pass: string;
   from: string;
   baseUrl: string;
+  appUrl: string;
 }
 
 interface SendRawInput {
@@ -22,16 +23,13 @@ interface EmailClient {
   transporter: Transporter;
 }
 
-const REQUIRED_ENV_VARS = [
-  "SMTP_HOST",
-  "SMTP_PORT",
-  "SMTP_USER",
-  "SMTP_PASS",
-  "EMAIL_FROM",
-  "NEXT_PUBLIC_BASE_URL",
-] as const;
-
-type RequiredEnvVar = (typeof REQUIRED_ENV_VARS)[number];
+type RequiredEnvVar =
+  | "SMTP_HOST"
+  | "SMTP_PORT"
+  | "SMTP_USER"
+  | "SMTP_PASS"
+  | "EMAIL_FROM"
+  | "NEXT_PUBLIC_BASE_URL";
 
 function getRequiredEnv(name: RequiredEnvVar): string {
   const value = process.env[name]?.trim();
@@ -62,6 +60,10 @@ function getEmailConfig(): EmailConfig {
     pass: getRequiredEnv("SMTP_PASS"),
     from: getRequiredEnv("EMAIL_FROM"),
     baseUrl: getRequiredEnv("NEXT_PUBLIC_BASE_URL").replace(/\/+$/, ""),
+    appUrl: (
+      process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+      getRequiredEnv("NEXT_PUBLIC_BASE_URL")
+    ).replace(/\/+$/, ""),
   };
 }
 
@@ -182,6 +184,93 @@ export async function sendVerificationEmail(
     subject: "Verify your CampusKart email address",
     text: buildVerificationEmailText(verificationLink),
     html: buildVerificationEmailHtml(verificationLink),
+  });
+}
+
+// Password reset -------------------------------------------------------------
+
+function buildPasswordResetEmailHtml(
+  resetLink: string,
+  fullName?: string
+): string {
+  const greeting = fullName ? `Hi ${fullName},` : "Hi,";
+
+  return `
+    <div style="margin:0;padding:32px 16px;background-color:#f4f7fb;font-family:Arial,sans-serif;color:#111827;">
+      <div style="max-width:600px;margin:0 auto;background-color:#ffffff;border:1px solid #e5e7eb;border-radius:16px;padding:40px 32px;">
+        <p style="margin:0 0 16px;font-size:14px;letter-spacing:0.08em;text-transform:uppercase;color:#2563eb;font-weight:700;">
+          CampusKart
+        </p>
+        <h1 style="margin:0 0 16px;font-size:28px;line-height:1.25;color:#111827;">
+          Reset your password
+        </h1>
+        <p style="margin:0 0 16px;font-size:16px;line-height:1.7;color:#374151;">
+          ${greeting}
+        </p>
+        <p style="margin:0 0 16px;font-size:16px;line-height:1.7;color:#374151;">
+          We received a request to reset the password for your CampusKart account.
+        </p>
+        <p style="margin:0 0 24px;font-size:16px;line-height:1.7;color:#374151;">
+          This password reset link expires in 1 hour and can only be used once.
+        </p>
+        <p style="margin:0 0 32px;">
+          <a
+            href="${resetLink}"
+            style="display:inline-block;padding:14px 24px;border-radius:10px;background-color:#2563eb;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;"
+          >
+            Reset Password
+          </a>
+        </p>
+        <p style="margin:0 0 12px;font-size:14px;line-height:1.7;color:#6b7280;">
+          If the button does not work, copy and paste this link into your browser:
+        </p>
+        <p style="margin:0 0 24px;font-size:14px;line-height:1.7;word-break:break-word;">
+          <a href="${resetLink}" style="color:#2563eb;text-decoration:none;">
+            ${resetLink}
+          </a>
+        </p>
+        <p style="margin:0;font-size:14px;line-height:1.7;color:#6b7280;">
+          If you did not request a password reset, you can safely ignore this email.
+        </p>
+      </div>
+    </div>
+  `;
+}
+
+function buildPasswordResetEmailText(
+  resetLink: string,
+  fullName?: string
+): string {
+  return [
+    "CampusKart",
+    "",
+    fullName ? `Hi ${fullName},` : "Hi,",
+    "",
+    "We received a request to reset the password for your CampusKart account.",
+    "This password reset link expires in 1 hour and can only be used once.",
+    "",
+    resetLink,
+    "",
+    "If you did not request a password reset, you can safely ignore this email.",
+  ].join("\n");
+}
+
+export async function sendPasswordResetEmail(
+  to: string,
+  token: string,
+  fullName?: string
+): Promise<SentMessageInfo> {
+  const { config } = getEmailClient();
+  const resetLink = new URL(
+    `/reset-password?token=${encodeURIComponent(token)}`,
+    config.appUrl
+  ).toString();
+
+  return sendRaw({
+    to,
+    subject: "Reset your CampusKart password",
+    text: buildPasswordResetEmailText(resetLink, fullName),
+    html: buildPasswordResetEmailHtml(resetLink, fullName),
   });
 }
 

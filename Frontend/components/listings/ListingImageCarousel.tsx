@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { Camera, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import SoldBannerOverlay from "@/components/listings/SoldBannerOverlay";
 
 interface ListingImageCarouselProps {
@@ -24,11 +25,37 @@ export default function ListingImageCarousel({
   );
 
   const [index, setIndex] = useState(0);
-  const count = cleaned.length;
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [failedUrls, setFailedUrls] = useState<ReadonlySet<string>>(
+    () => new Set<string>()
+  );
+  const displayImages = useMemo(
+    () => cleaned.filter((url) => !failedUrls.has(url)),
+    [cleaned, failedUrls]
+  );
+  const count = displayImages.length;
 
   const canCycle = count > 1;
   const safeIndex = count === 0 ? 0 : Math.min(index, count - 1);
-  const src = cleaned[safeIndex] ?? null;
+  const src = displayImages[safeIndex] ?? null;
+
+  useEffect(() => {
+    if (!isLightboxOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsLightboxOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.body.classList.add("overflow-hidden");
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.classList.remove("overflow-hidden");
+    };
+  }, [isLightboxOpen]);
 
   const prev = () => {
     if (!canCycle) return;
@@ -40,24 +67,70 @@ export default function ListingImageCarousel({
   };
 
   return (
-    <div className="relative w-full overflow-hidden rounded-card bg-surface border border-border">
-      <div className="relative aspect-video w-full bg-surface">
+    <div className="relative h-80 w-full overflow-hidden rounded-card border border-border bg-gray-50">
+      <div className="relative h-full w-full overflow-hidden bg-gray-50">
         {isSold ? <SoldBannerOverlay /> : null}
         {src ? (
-          <Image
-            src={src}
-            alt={title}
-            fill
-            sizes="(max-width: 768px) 100vw, 720px"
-            className="object-cover"
-            priority
-          />
+          <button
+            type="button"
+            onClick={() => setIsLightboxOpen(true)}
+            className="relative h-full w-full cursor-zoom-in bg-gray-50"
+            aria-label={`Open larger image of ${title}`}
+          >
+            <Image
+              src={src}
+              alt={title}
+              fill
+              sizes="(max-width: 768px) 100vw, 720px"
+              className="h-full w-full bg-gray-50 object-contain"
+              onError={() => {
+                setFailedUrls((previous) => new Set(previous).add(src));
+              }}
+              priority
+            />
+          </button>
         ) : (
-          <div className="absolute inset-0 grid place-items-center">
-            <div className="text-sm text-text-muted">No image available</div>
+          <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-gray-100 text-gray-400">
+            <Camera className="h-12 w-12" strokeWidth={1.5} aria-hidden="true" />
+            <div className="text-sm font-medium text-gray-500">
+              No image available
+            </div>
           </div>
         )}
       </div>
+
+      {src && isLightboxOpen ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Expanded image of ${title}`}
+          onClick={() => setIsLightboxOpen(false)}
+        >
+          <button
+            type="button"
+            onClick={() => setIsLightboxOpen(false)}
+            className="absolute right-4 top-4 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/95 text-gray-900 shadow-lg transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
+            aria-label="Close image"
+          >
+            <X className="h-6 w-6" aria-hidden="true" />
+          </button>
+
+          <div
+            className="relative h-full max-h-[90vh] w-full max-w-6xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <Image
+              src={src}
+              alt={title}
+              fill
+              sizes="100vw"
+              className="h-full w-full object-contain"
+              priority
+            />
+          </div>
+        </div>
+      ) : null}
 
       {/* Controls */}
       {canCycle && (
@@ -81,7 +154,7 @@ export default function ListingImageCarousel({
 
           {/* Dots */}
           <div className="absolute bottom-2 left-0 right-0 flex items-center justify-center gap-1.5">
-            {cleaned.map((_u, i) => (
+            {displayImages.map((_u, i) => (
               <button
                 key={i}
                 type="button"

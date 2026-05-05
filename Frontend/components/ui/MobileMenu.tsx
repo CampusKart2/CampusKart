@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { logoutAction } from "@/app/(auth)/actions";
+import { ADMIN_EMAIL } from "@/lib/admin";
 import type { SessionPayload } from "@/lib/session";
 
 interface MobileMenuProps {
@@ -12,6 +13,7 @@ interface MobileMenuProps {
 
 export default function MobileMenu({ session }: MobileMenuProps) {
   const [open, setOpen] = useState(false);
+  const isAdmin = session?.email.toLowerCase() === ADMIN_EMAIL;
 
   return (
     <div className="relative">
@@ -45,6 +47,22 @@ export default function MobileMenu({ session }: MobileMenuProps) {
               >
                 + Sell something
               </Link>
+              <Link
+                href="/profile"
+                onClick={() => setOpen(false)}
+                className="px-4 py-2 text-sm font-semibold text-text-primary hover:bg-surface transition"
+              >
+                My profile
+              </Link>
+              {isAdmin ? (
+                <Link
+                  href="/admin"
+                  onClick={() => setOpen(false)}
+                  className="px-4 py-2 text-sm font-semibold text-danger hover:bg-red-50 transition"
+                >
+                  Admin dashboard
+                </Link>
+              ) : null}
 
               {/* T-13: Logout button — separated visually, styled as destructive action */}
               <div className="px-3 pt-1 mt-1 border-t border-border">
