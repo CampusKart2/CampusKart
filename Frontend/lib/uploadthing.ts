@@ -2,7 +2,9 @@ import { createUploadthing, UploadThingError } from "uploadthing/server";
 
 const LISTING_PHOTO_MAX_FILE_COUNT = 5;
 const LISTING_PHOTO_MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+const AVATAR_MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024;
 const UPLOADTHING_IMAGE_SIZE_CEILING = "8MB" as const;
+const UPLOADTHING_AVATAR_SIZE_CEILING = "4MB" as const;
 
 type UploadThingErrorShape = {
   code: UploadThingError["code"];
@@ -40,6 +42,27 @@ const f = createUploadthing<UploadThingErrorShape>({
 });
 
 export const ourFileRouter = {
+  avatar: f({
+    image: {
+      maxFileCount: 1,
+      maxFileSize: UPLOADTHING_AVATAR_SIZE_CEILING,
+    },
+  })
+    .middleware(({ files }) => {
+      const oversizedFile = files.find(
+        (file) => file.size > AVATAR_MAX_FILE_SIZE_BYTES
+      );
+
+      if (oversizedFile) {
+        throw new UploadThingError({
+          code: "BAD_REQUEST",
+          message: `Profile photos must be 2 MB or smaller. "${oversizedFile.name}" is too large.`,
+        });
+      }
+
+      return {};
+    })
+    .onUploadComplete(() => undefined),
   photo: f({
     image: {
       maxFileCount: LISTING_PHOTO_MAX_FILE_COUNT,

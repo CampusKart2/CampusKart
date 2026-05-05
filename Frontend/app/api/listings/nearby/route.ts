@@ -14,6 +14,8 @@ type DbNearbyListingRow = {
   category_slug: string;
   thumbnail_url: string | null;
   seller_id: string;
+  seller_average_rating: string;
+  seller_rating_count: number;
   created_at: string;
   view_count: number;
   distance_meters: number;
@@ -70,11 +72,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         LIMIT 1
       ) AS thumbnail_url,
       l.seller_id,
+      u.average_rating AS seller_average_rating,
+      u.rating_count AS seller_rating_count,
       l.created_at,
       l.view_count,
       ST_Distance(l.location, origin.point)::double precision AS distance_meters
     FROM listings l
     JOIN categories c ON c.id = l.category_id
+    JOIN users u ON u.id = l.seller_id
     CROSS JOIN origin
     WHERE l.status <> 'deleted'
       AND l.status = 'active'
@@ -106,6 +111,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       category: row.category_slug,
       thumbnail_url: row.thumbnail_url,
       seller_id: row.seller_id,
+      seller_average_rating: Number(row.seller_average_rating),
+      seller_rating_count: row.seller_rating_count,
       created_at: row.created_at,
       view_count: row.view_count,
       // Round to 2 decimals for stable client display while preserving

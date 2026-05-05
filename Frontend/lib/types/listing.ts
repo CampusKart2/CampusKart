@@ -11,6 +11,8 @@ export type Listing = {
   category: string;
   thumbnail_url: string | null;
   seller_id: string;
+  seller_average_rating?: number;
+  seller_rating_count?: number;
   created_at: string;
   view_count: number;
   /** Present on GET /api/listings/:id — ordered by `listing_photos.position`. */
