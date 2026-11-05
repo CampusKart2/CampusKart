@@ -1,8 +1,9 @@
 import { cookies } from "next/headers";
 import { query } from "@/lib/db";
+import { SESSION_COOKIE_NAME } from "@/lib/routes";
 import { verifySession, type SessionPayload } from "@/lib/session";
 
-const COOKIE_NAME = "campuskart_session";
+const COOKIE_NAME = SESSION_COOKIE_NAME;
 
 /**
  * Returns the verified session payload for the current request, or null.

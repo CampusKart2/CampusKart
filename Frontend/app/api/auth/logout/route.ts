@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { appPath, sessionCookiePath } from "@/lib/routes";
+import { appPath, SESSION_COOKIE_NAME, sessionCookiePath } from "@/lib/routes";
 import { verifySession } from "@/lib/session";
 
-const COOKIE_NAME = "campuskart_session";
+const COOKIE_NAME = SESSION_COOKIE_NAME;
 
 // ─── Shared logout helper ──────────────────────────────────────────────────────
 //

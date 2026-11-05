@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sessionCookiePath } from "@/lib/routes";
+import { SESSION_COOKIE_NAME, sessionCookiePath } from "@/lib/routes";
 import { cookies } from "next/headers";
 import { z } from "zod";
 import { pool, query } from "@/lib/db";
 import { verifySession, signSession } from "@/lib/session";
 
-const COOKIE_NAME = "campuskart_session";
+const COOKIE_NAME = SESSION_COOKIE_NAME;
 const COOKIE_TTL = 60 * 60 * 24 * 7; // 7 days in seconds
 
 // ─── Validation ────────────────────────────────────────────────────────────────

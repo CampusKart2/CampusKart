@@ -1,7 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { sessionCookiePath } from "@/lib/routes";
+import { SESSION_COOKIE_NAME, sessionCookiePath } from "@/lib/routes";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { signupSchema, loginSchema } from "@/lib/validators/auth";
@@ -10,7 +10,7 @@ import { signSession } from "@/lib/session";
 import { issueVerificationToken } from "@/lib/verification";
 import { sendVerificationEmail } from "@/lib/email";
 
-const COOKIE_NAME = "campuskart_session";
+const COOKIE_NAME = SESSION_COOKIE_NAME;
 const COOKIE_TTL = 60 * 60 * 24 * 7; // 7 days in seconds
 const BCRYPT_ROUNDS = 12;
 

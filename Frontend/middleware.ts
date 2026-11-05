@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { appPath, sessionCookiePath } from "@/lib/routes";
+import {
+  appPath,
+  LEGACY_SESSION_COOKIE_NAME,
+  SESSION_COOKIE_NAME,
+  sessionCookiePath,
+} from "@/lib/routes";
 import { verifySession, signSession } from "@/lib/session";
 
-const COOKIE_NAME = "campuskart_session";
+const COOKIE_NAME = SESSION_COOKIE_NAME;
 const COOKIE_TTL  = 60 * 60 * 24 * 7;  // 7 days in seconds
 
 // Refresh the JWT when fewer than this many seconds remain on the current token.
@@ -64,8 +69,42 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
   const isApiRoute = pathname.startsWith("/api/");
 
+  // ── 0. Migrate the old Path=/ session cookie ──────────────────────────────
+  // A valid old token moves to the scoped cookie so nobody is logged out; the
+  // old cookie is always expired. A scoped cookie wins if both are present.
+  const hasLegacyCookie = request.cookies.has(LEGACY_SESSION_COOKIE_NAME);
+  const legacyToken = request.cookies.get(LEGACY_SESSION_COOKIE_NAME)?.value ?? "";
+  const currentToken = request.cookies.get(COOKIE_NAME)?.value ?? "";
+  const adoptedToken =
+    !currentToken && legacyToken && (await verifySession(legacyToken)) ? legacyToken : "";
+
+  // Downstream handlers read cookies from the request, so this request must
+  // already carry the migrated cookie, not only the response.
+  function next(): NextResponse {
+    if (!hasLegacyCookie) return NextResponse.next();
+    request.cookies.delete(LEGACY_SESSION_COOKIE_NAME);
+    if (adoptedToken) request.cookies.set(COOKIE_NAME, adoptedToken);
+    return NextResponse.next({ request: { headers: request.headers } });
+  }
+
+  function withMigration(res: NextResponse): NextResponse {
+    if (adoptedToken) {
+      res.cookies.set(COOKIE_NAME, adoptedToken, {
+        httpOnly: true,
+        secure:   false, // Temporarily disabled for EC2 HTTP testing
+        sameSite: "lax",
+        maxAge:   COOKIE_TTL,
+        path:     sessionCookiePath,
+      });
+    }
+    if (hasLegacyCookie) {
+      res.cookies.delete({ name: LEGACY_SESSION_COOKIE_NAME, path: "/" });
+    }
+    return res;
+  }
+
   // ── 1. Verify the session JWT ─────────────────────────────────────────────
-  const rawToken = request.cookies.get(COOKIE_NAME)?.value ?? "";
+  const rawToken = currentToken || adoptedToken;
   // verifySession returns null for missing / expired / tampered tokens
   const session = rawToken ? await verifySession(rawToken) : null;
 
@@ -98,10 +137,10 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   // land on a meaningful page rather than a form they've already completed.
   if (!isApiRoute && AUTH_ONLY_PAGES.includes(pathname)) {
     if (session) {
-      return NextResponse.redirect(new URL(appPath("/"), request.url));
+      return withMigration(NextResponse.redirect(new URL(appPath("/"), request.url)));
     }
     // Unauthenticated users pass through — no further checks needed for these pages.
-    return NextResponse.next();
+    return withMigration(next());
   }
 
   // ── 2b. Authentication gate (protected pages) ─────────────────────────────
@@ -109,7 +148,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     if (!session) {
       const loginUrl = new URL(appPath("/login"), request.url);
       loginUrl.searchParams.set("from", pathname);
-      return NextResponse.redirect(loginUrl);
+      return withMigration(NextResponse.redirect(loginUrl));
     }
   }
 
@@ -123,17 +162,19 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
       matchesPrefix(pathname, VERIFIED_REQUIRED_API_PREFIXES)
     ) {
       if (!session) {
-        return unauthorized("Authentication required.");
+        return withMigration(unauthorized("Authentication required."));
       }
       if (!session.emailVerified) {
-        return unauthorized(
-          "Email verification required. Please verify your .edu address before continuing."
+        return withMigration(
+          unauthorized(
+            "Email verification required. Please verify your .edu address before continuing."
+          )
         );
       }
     }
   }
 
-  const res = NextResponse.next();
+  const res = withMigration(next());
 
   // Attach the refreshed token if one was issued
   if (refreshedToken) {
@@ -150,27 +191,13 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
 }
 
 // ─── Matcher ───────────────────────────────────────────────────────────────────
-// Include every path that the middleware needs to inspect.
-// Static assets (_next/static, _next/image, favicon, etc.) are excluded automatically
-// by the leading negative lookahead in the default Next.js matcher pattern.
+// Runs on every route except static assets, because the old session cookie must
+// be migrated wherever a user lands. Route gating is done by the tables above.
 
 export const config = {
   matcher: [
-    // Auth-only pages (logged-in users are redirected away from these)
-    "/login",
-    "/signup",
-    // Auth-required pages
-    "/search/:path*",
-    "/listings/:path*",
-    "/sellers/:path*",
-    "/chat/:path*",
-    "/messages/:path*",
-    "/saves/:path*",
-    "/profile",
-    // Verified-required API routes
-    "/api/listings/:path*",
-    "/api/messages/:path*",
-    "/api/chat/:path*",
-    "/api/offers/:path*",
+    // With a basePath the pattern below does not match the app root itself.
+    "/",
+    "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 };

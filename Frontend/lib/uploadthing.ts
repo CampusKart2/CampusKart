@@ -1,4 +1,5 @@
 import { createUploadthing, UploadThingError } from "uploadthing/server";
+import { getSession } from "@/lib/auth";
 
 const LISTING_PHOTO_MAX_FILE_COUNT = 5;
 const LISTING_PHOTO_MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
@@ -41,6 +42,25 @@ const f = createUploadthing<UploadThingErrorShape>({
   },
 });
 
+/** Rejects the upload unless the caller may use it. Runs before any file is accepted. */
+async function assertCanUpload(options: { requireVerifiedEmail: boolean }): Promise<void> {
+  const session = await getSession();
+
+  if (!session) {
+    throw new UploadThingError({
+      code: "FORBIDDEN",
+      message: "Sign in to upload photos.",
+    });
+  }
+
+  if (options.requireVerifiedEmail && !session.emailVerified) {
+    throw new UploadThingError({
+      code: "FORBIDDEN",
+      message: "Verify your email to upload listing photos.",
+    });
+  }
+}
+
 export const ourFileRouter = {
   avatar: f({
     image: {
@@ -48,7 +68,9 @@ export const ourFileRouter = {
       maxFileSize: UPLOADTHING_AVATAR_SIZE_CEILING,
     },
   })
-    .middleware(({ files }) => {
+    .middleware(async ({ files }) => {
+      await assertCanUpload({ requireVerifiedEmail: false });
+
       const oversizedFile = files.find(
         (file) => file.size > AVATAR_MAX_FILE_SIZE_BYTES
       );
@@ -69,7 +91,10 @@ export const ourFileRouter = {
       maxFileSize: UPLOADTHING_IMAGE_SIZE_CEILING,
     },
   })
-    .middleware(({ files }) => {
+    .middleware(async ({ files }) => {
+      // Same rule as creating a listing, which also requires a verified email.
+      await assertCanUpload({ requireVerifiedEmail: true });
+
       const oversizedFile = files.find(
         (file) => file.size > LISTING_PHOTO_MAX_FILE_SIZE_BYTES
       );

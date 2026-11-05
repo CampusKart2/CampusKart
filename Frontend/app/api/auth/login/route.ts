@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { loginSchema } from "@/lib/validators/auth";
 import { query } from "@/lib/db";
-import { sessionCookiePath } from "@/lib/routes";
+import { SESSION_COOKIE_NAME, sessionCookiePath } from "@/lib/routes";
 import { signSession } from "@/lib/session";
 
-const COOKIE_NAME = "campuskart_session";
+const COOKIE_NAME = SESSION_COOKIE_NAME;
 const COOKIE_TTL  = 60 * 60 * 24 * 7; // 7 days in seconds
 
 // ─── POST /api/auth/login ──────────────────────────────────────────────────────
@@ -16,7 +16,7 @@ const COOKIE_TTL  = 60 * 60 * 24 * 7; // 7 days in seconds
 //   { email: string (.edu), password: string }
 //
 // Responses:
-//   200  OK           — { id, full_name, email, emailVerified }  +  Set-Cookie: campuskart_session
+//   200  OK           — { id, full_name, email, emailVerified }  +  Set-Cookie: campuskart_sid
 //   400  Bad Request  — Zod validation failure
 //   401  Unauthorized — Wrong email or password
 //   500  Server Error — Unexpected DB / crypto failure
