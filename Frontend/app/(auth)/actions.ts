@@ -1,7 +1,7 @@
 "use server";
 
-import { cookies } from "next/headers";
-import { SESSION_COOKIE_NAME, sessionCookiePath } from "@/lib/routes";
+import { cookies, headers } from "next/headers";
+import { appPath, SESSION_COOKIE_NAME, sessionCookiePath } from "@/lib/routes";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { signupSchema, loginSchema } from "@/lib/validators/auth";
@@ -29,6 +29,24 @@ async function setSessionCookie(
     maxAge: COOKIE_TTL,
     path: sessionCookiePath,
   });
+}
+
+/**
+ * Redirects from a Server Action while keeping the basePath in both flows.
+ *
+ * Without JavaScript the form posts normally and Next sends this path as the
+ * Location header unchanged, so it needs the basePath. With JavaScript the action
+ * call carries a next-action header and Next adds the basePath itself, so adding
+ * it here too would make Next render /campuskart/campuskart/...
+ */
+async function redirectFromAction(path: string): Promise<never> {
+  const isJavaScriptCall = (await headers()).has("next-action");
+  redirect(isJavaScriptCall ? path : appPath(path));
+}
+
+/** Only same-site paths are valid login destinations; anything else goes home. */
+function safeRedirectPath(path: string): string {
+  return /^\/(?![/\\])/.test(path) ? path : "/";
 }
 
 // ─── Login ─────────────────────────────────────────────────────────────────────
@@ -74,7 +92,7 @@ export async function loginAction(
   }
 
   await setSessionCookie(user.id, email, user.email_verified);
-  redirect(from);
+  return redirectFromAction(safeRedirectPath(from));
 }
 
 // ─── Signup ────────────────────────────────────────────────────────────────────
@@ -151,7 +169,7 @@ export async function signupAction(
 
   // T-08: always land on the "Check Your Email" confirmation screen
   // after signup, regardless of the original `from` destination.
-  redirect(`/check-email?email=${encodeURIComponent(email)}`);
+  return redirectFromAction(`/check-email?email=${encodeURIComponent(email)}`);
 }
 
 // ─── Logout ────────────────────────────────────────────────────────────────────
@@ -159,5 +177,5 @@ export async function signupAction(
 export async function logoutAction() {
   const store = await cookies();
   store.delete({ name: COOKIE_NAME, path: sessionCookiePath });
-  redirect("/login");
+  return redirectFromAction("/login");
 }
