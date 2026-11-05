@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, LoaderCircle, MailWarning, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { apiPath } from "@/lib/routes";
 
 interface VerifyEmailConfirmCardProps {
   token: string;
@@ -35,7 +36,7 @@ export default function VerifyEmailConfirmCard({
 
       try {
         const res = await fetch(
-          `/api/auth/verify-email/confirm?token=${encodeURIComponent(token)}`,
+          apiPath(`/api/auth/verify-email/confirm?token=${encodeURIComponent(token)}`),
           { method: "GET", credentials: "include" }
         );
         const body = (await res.json()) as { message?: string; error?: string };

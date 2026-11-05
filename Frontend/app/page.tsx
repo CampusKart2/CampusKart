@@ -15,6 +15,7 @@ import {
 import ListingCard from "@/components/listings/ListingCard";
 import HeroSearchBar from "@/components/home/HeroSearchBar";
 import { getSession } from "@/lib/auth";
+import { appUrl } from "@/lib/routes";
 import type { Listing } from "@/lib/types/listing";
 
 const CATEGORIES = [
@@ -48,9 +49,8 @@ const HOW_IT_WORKS = [
 ] as const;
 
 async function fetchRecentListings(): Promise<Listing[]> {
-  const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
   try {
-    const res = await fetch(`${base}/api/listings?limit=8`, { cache: "no-store" });
+    const res = await fetch(appUrl("/api/listings?limit=8"), { cache: "no-store" });
     if (!res.ok) return [];
     const data = (await res.json()) as { listings?: Listing[] } | Listing[];
     return Array.isArray(data) ? data : (data.listings ?? []);

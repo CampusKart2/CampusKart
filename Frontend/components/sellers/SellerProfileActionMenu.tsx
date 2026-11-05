@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { z } from "zod";
+import { apiPath } from "@/lib/routes";
 
 type SellerProfileActionMenuProps = {
   sellerId: string;
@@ -49,7 +50,7 @@ export default function SellerProfileActionMenu({
   const confirmVerb = isBlocked ? "Unblock" : "Block";
 
   async function refreshBlockState(): Promise<void> {
-    const response = await fetch(`/api/users/${encodeURIComponent(sellerId)}/block`, {
+    const response = await fetch(apiPath(`/api/users/${encodeURIComponent(sellerId)}/block`), {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });
@@ -69,7 +70,7 @@ export default function SellerProfileActionMenu({
     setErrorMessage(null);
 
     try {
-      const response = await fetch(`/api/users/${encodeURIComponent(sellerId)}/block`, {
+      const response = await fetch(apiPath(`/api/users/${encodeURIComponent(sellerId)}/block`), {
         method: isBlocked ? "DELETE" : "POST",
         headers: { "Content-Type": "application/json" },
       });

@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState, type ChangeEvent } from "react";
 import { Camera, X } from "lucide-react";
 import { genUploader } from "uploadthing/client";
+import { apiPath } from "@/lib/routes";
 import type { OurFileRouter } from "@/lib/uploadthing";
 
 type EditableProfileUser = {
@@ -49,7 +50,7 @@ export default function ProfileEditor({ initialUser }: ProfileEditorProps) {
     setIsSaving(true);
 
     try {
-      const response = await fetch("/api/users/me", {
+      const response = await fetch(apiPath("/api/users/me"), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

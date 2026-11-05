@@ -14,6 +14,7 @@ import {
 } from "stream-chat-react";
 import { StreamChat } from "stream-chat";
 
+import { apiPath } from "@/lib/routes";
 import { chatTokenResponseSchema } from "@/lib/validators/chat";
 import InboxView from "@/components/chat/InboxView";
 
@@ -54,7 +55,7 @@ export default function ChatView({
       connectingRef.current = true;
 
       try {
-        const res = await fetch("/api/chat/token", {
+        const res = await fetch(apiPath("/api/chat/token"), {
           method: "POST",
           credentials: "include",
         });

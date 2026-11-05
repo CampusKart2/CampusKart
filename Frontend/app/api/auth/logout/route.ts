@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { appPath } from "@/lib/routes";
 import { verifySession } from "@/lib/session";
 
 const COOKIE_NAME = "campuskart_session";
@@ -37,7 +38,7 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
   }
 
   // T-15: redirectUrl tells REST/SPA consumers where to navigate post-logout.
-  return clearSession({ message: "Logged out.", redirectUrl: "/login" }, 200);
+  return clearSession({ message: "Logged out.", redirectUrl: appPath("/login") }, 200);
 }
 
 // ─── POST /api/auth/logout ─────────────────────────────────────────────────────

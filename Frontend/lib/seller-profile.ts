@@ -1,5 +1,6 @@
 import type { SellerProfileApiResponse } from "@/lib/types/seller-profile";
 import type { SellerReviewsApiResponse } from "@/lib/types/seller-reviews";
+import { appUrl } from "@/lib/routes";
 
 /**
  * Loads public seller profile JSON (used by the seller profile page and metadata).
@@ -9,10 +10,7 @@ export async function fetchSellerProfile(
   userId: string,
   query: { page: number; limit: number }
 ): Promise<SellerProfileApiResponse | null> {
-  const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
-  const url = new URL(
-    `${base}/api/users/${encodeURIComponent(userId)}/profile`
-  );
+  const url = new URL(appUrl(`/api/users/${encodeURIComponent(userId)}/profile`));
   url.searchParams.set("page", String(query.page));
   url.searchParams.set("limit", String(query.limit));
 
@@ -37,10 +35,7 @@ export async function fetchSellerReviews(
   userId: string,
   query: { page: number }
 ): Promise<SellerReviewsApiResponse | null> {
-  const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
-  const url = new URL(
-    `${base}/api/users/${encodeURIComponent(userId)}/reviews`
-  );
+  const url = new URL(appUrl(`/api/users/${encodeURIComponent(userId)}/reviews`));
   url.searchParams.set("page", String(query.page));
 
   const res = await fetch(url.toString(), { cache: "no-store" });

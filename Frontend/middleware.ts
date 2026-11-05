@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { appPath } from "@/lib/routes";
 import { verifySession, signSession } from "@/lib/session";
 
 const COOKIE_NAME = "campuskart_session";
@@ -97,7 +98,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   // land on a meaningful page rather than a form they've already completed.
   if (!isApiRoute && AUTH_ONLY_PAGES.includes(pathname)) {
     if (session) {
-      return NextResponse.redirect(new URL("/", request.url));
+      return NextResponse.redirect(new URL(appPath("/"), request.url));
     }
     // Unauthenticated users pass through — no further checks needed for these pages.
     return NextResponse.next();
@@ -106,7 +107,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   // ── 2b. Authentication gate (protected pages) ─────────────────────────────
   if (!isApiRoute && matchesPrefix(pathname, AUTH_REQUIRED_PAGES)) {
     if (!session) {
-      const loginUrl = new URL("/login", request.url);
+      const loginUrl = new URL(appPath("/login"), request.url);
       loginUrl.searchParams.set("from", pathname);
       return NextResponse.redirect(loginUrl);
     }
@@ -173,4 +174,3 @@ export const config = {
     "/api/offers/:path*",
   ],
 };
-

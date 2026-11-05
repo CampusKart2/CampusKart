@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
+import { apiPath } from "@/lib/routes";
 
 const deleteListingResponseSchema = z.object({
   listing: z.object({
@@ -31,7 +32,7 @@ export default function DeleteListingButton({
     setErrorMessage(null);
 
     try {
-      const response = await fetch(`/api/listings/${encodeURIComponent(listingId)}`, {
+      const response = await fetch(apiPath(`/api/listings/${encodeURIComponent(listingId)}`), {
         method: "DELETE",
       });
 

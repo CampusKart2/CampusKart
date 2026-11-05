@@ -11,6 +11,7 @@ import {
 import { useRouter } from "next/navigation";
 import type { ZodError } from "zod";
 import { genUploader } from "uploadthing/client";
+import { apiPath } from "@/lib/routes";
 import type { OurFileRouter } from "@/lib/uploadthing";
 import {
   createListingBodySchema,
@@ -226,7 +227,7 @@ export default function CreateListingWizard({
 
   useEffect(() => {
     let active = true;
-    fetch("/api/categories")
+    fetch(apiPath("/api/categories"))
       .then(async (res) => {
         if (!res.ok) {
           throw new Error("Failed to load categories.");
@@ -604,7 +605,7 @@ export default function CreateListingWizard({
       setIsSubmitting(true);
       try {
         const response = await fetch(
-          `/api/listings/${encodeURIComponent(listingId)}`,
+          apiPath(`/api/listings/${encodeURIComponent(listingId)}`),
           {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
@@ -651,7 +652,7 @@ export default function CreateListingWizard({
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/listings", {
+      const response = await fetch(apiPath("/api/listings"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import ReviewPromptModal from "@/components/sellers/ReviewPromptModal";
+import { apiPath } from "@/lib/routes";
 import type { ReviewPrompt } from "@/app/api/users/me/review-prompts/route";
 
 // ---------------------------------------------------------------------------
@@ -66,7 +67,7 @@ export default function ReviewPromptChecker() {
 
     async function fetchPrompts() {
       try {
-        const res = await fetch("/api/users/me/review-prompts", {
+        const res = await fetch(apiPath("/api/users/me/review-prompts"), {
           // No-store so we always get the freshest data on each page load
           cache: "no-store",
         });

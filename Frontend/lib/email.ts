@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import type { SentMessageInfo, Transporter } from "nodemailer";
+import { appPath } from "@/lib/routes";
 
 interface EmailConfig {
   host: string;
@@ -175,7 +176,7 @@ export async function sendVerificationEmail(
 ): Promise<SentMessageInfo> {
   const { config } = getEmailClient();
   const verificationLink = new URL(
-    `/verify-email/confirm?token=${encodeURIComponent(token)}`,
+    appPath(`/verify-email/confirm?token=${encodeURIComponent(token)}`),
     config.baseUrl
   ).toString();
 
@@ -262,7 +263,7 @@ export async function sendPasswordResetEmail(
 ): Promise<SentMessageInfo> {
   const { config } = getEmailClient();
   const resetLink = new URL(
-    `/reset-password?token=${encodeURIComponent(token)}`,
+    appPath(`/reset-password?token=${encodeURIComponent(token)}`),
     config.appUrl
   ).toString();
 
@@ -371,7 +372,7 @@ export async function sendReportThresholdAlert(
   const { config } = getEmailClient();
 
   const listingUrl = new URL(
-    `/listings/${encodeURIComponent(input.listingId)}`,
+    appPath(`/listings/${encodeURIComponent(input.listingId)}`),
     config.baseUrl
   ).toString();
 

@@ -7,6 +7,7 @@ import {
   REPORT_REASONS,
   type ReportReason,
 } from "@/lib/types/report";
+import { apiPath } from "@/lib/routes";
 
 // ── Response schema ────────────────────────────────────────────────────────────
 
@@ -83,7 +84,7 @@ export default function ReportListingButton({
 
     try {
       const response = await fetch(
-        `/api/listings/${encodeURIComponent(listingId)}/report`,
+        apiPath(`/api/listings/${encodeURIComponent(listingId)}/report`),
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

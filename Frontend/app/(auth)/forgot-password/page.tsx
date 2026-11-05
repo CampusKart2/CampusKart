@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
+import { apiPath } from "@/lib/routes";
 import { forgotPasswordSchema } from "@/lib/validators/auth";
 
 export default function ForgotPasswordPage() {
@@ -29,7 +30,7 @@ export default function ForgotPasswordPage() {
     setPending(true);
 
     try {
-      const response = await fetch("/api/auth/forgot-password", {
+      const response = await fetch(apiPath("/api/auth/forgot-password"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(parsed.data),

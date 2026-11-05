@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import ListingsGrid from "@/components/listings/ListingsGrid";
+import { apiPath } from "@/lib/routes";
 import type { Listing, NearbyListing } from "@/lib/types/listing";
 
 type BrowseMode = "search" | "nearby";
@@ -115,7 +116,7 @@ export default function ListingsDiscoveryPanel({
           radius: String(radiusKm),
         });
 
-        const response = await fetch(`/api/listings/nearby?${params.toString()}`, {
+        const response = await fetch(apiPath(`/api/listings/nearby?${params.toString()}`), {
           cache: "no-store",
         });
 

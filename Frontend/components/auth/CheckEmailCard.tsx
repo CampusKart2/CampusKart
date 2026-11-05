@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useTransition } from "react";
+import { apiPath } from "@/lib/routes";
 
 interface Props {
   /** Pre-masked email shown in the body copy, e.g. "al**@pace.edu" */
@@ -16,7 +17,7 @@ export default function CheckEmailCard({ maskedEmail }: Props) {
     setResendStatus("idle");
     startTransition(async () => {
       try {
-        const res = await fetch("/api/auth/verify-email/resend", { method: "POST" });
+        const res = await fetch(apiPath("/api/auth/verify-email/resend"), { method: "POST" });
         const body = (await res.json()) as { message?: string; error?: string };
         setResendStatus(res.ok ? "sent" : "error");
         if (!res.ok) console.error("[CheckEmailCard] resend error:", body.error);

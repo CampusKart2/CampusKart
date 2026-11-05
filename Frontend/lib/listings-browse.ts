@@ -1,4 +1,5 @@
 import type { Listing } from "@/lib/types/listing";
+import { appUrl } from "@/lib/routes";
 import { SEARCH_PARAM_KEYS } from "@/lib/search-params";
 import {
   LISTING_CONDITIONS,
@@ -60,8 +61,6 @@ function parseBoolean(value: string | undefined): boolean {
 export async function fetchListingsForBrowse(
   params: ListingsBrowseParams
 ): Promise<Listing[]> {
-  const base =
-    process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
   const searchParams = new URLSearchParams();
   if (params.q) searchParams.set("q", params.q);
   if (params.category) searchParams.set("category", params.category);
@@ -74,7 +73,7 @@ export async function fetchListingsForBrowse(
   searchParams.set("page", "1");
   searchParams.set("limit", "20");
 
-  const res = await fetch(`${base}/api/listings?${searchParams.toString()}`, {
+  const res = await fetch(appUrl(`/api/listings?${searchParams.toString()}`), {
     cache: "no-store",
   });
 
