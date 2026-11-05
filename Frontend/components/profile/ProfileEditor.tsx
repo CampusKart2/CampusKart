@@ -34,7 +34,7 @@ export default function ProfileEditor({ initialUser }: ProfileEditorProps) {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [avatarUploadError, setAvatarUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const uploader = genUploader<OurFileRouter>();
+  const uploader = genUploader<OurFileRouter>({ url: apiPath("/api/uploadthing") });
 
   const initials = useMemo(() => initialsFromName(user.full_name), [user.full_name]);
 

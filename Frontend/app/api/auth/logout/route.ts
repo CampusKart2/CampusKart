@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { appPath } from "@/lib/routes";
+import { appPath, sessionCookiePath } from "@/lib/routes";
 import { verifySession } from "@/lib/session";
 
 const COOKIE_NAME = "campuskart_session";
@@ -17,7 +17,7 @@ function clearSession(body: object, status: number): NextResponse {
     secure:   process.env.NODE_ENV === "production",
     sameSite: "lax",
     maxAge:   0, // instructs the browser to delete the cookie immediately
-    path:     "/",
+    path:     sessionCookiePath,
   });
   return res;
 }

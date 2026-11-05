@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { sessionCookiePath } from "@/lib/routes";
 import { cookies } from "next/headers";
 import { z } from "zod";
 import { pool, query } from "@/lib/db";
@@ -130,7 +131,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
           secure:   process.env.NODE_ENV === "production",
           sameSite: "lax",
           maxAge:   COOKIE_TTL,
-          path:     "/",
+          path:     sessionCookiePath,
         });
       }
     }

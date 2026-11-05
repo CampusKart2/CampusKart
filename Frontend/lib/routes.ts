@@ -8,6 +8,9 @@ function normalizeBasePath(path: string): string {
 
 export const basePath = normalizeBasePath(BASE_PATH);
 
+/** Cookie path for the session cookie, so it is only sent to this app. */
+export const sessionCookiePath = basePath || "/";
+
 export function appPath(path: string): string {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
   return `${basePath}${normalizedPath}`;

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { appPath } from "@/lib/routes";
+import { appPath, sessionCookiePath } from "@/lib/routes";
 import { verifySession, signSession } from "@/lib/session";
 
 const COOKIE_NAME = "campuskart_session";
@@ -142,7 +142,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
       secure:   false, // Temporarily disabled for EC2 HTTP testing
       sameSite: "lax",
       maxAge:   COOKIE_TTL,
-      path:     "/",
+      path:     sessionCookiePath,
     });
   }
 

@@ -9,7 +9,7 @@
 //   - Run seed script first: node seed-test-data.js
 // ============================================================
 
-const BASE_URL = process.env.APP_URL || "http://localhost:3000";
+const BASE_URL = process.env.APP_URL || "http://localhost:3002/campuskart";
 
 // ── tiny fetch wrapper ────────────────────────────────────────
 async function api(method, path, body, token) {

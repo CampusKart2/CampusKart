@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
+import { basePath } from "./lib/routes";
 
 const nextConfig: NextConfig = {
-  basePath: "/campuskart",
+  basePath,
   turbopack: {
     root: process.cwd(),
   },

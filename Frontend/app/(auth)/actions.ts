@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { sessionCookiePath } from "@/lib/routes";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { signupSchema, loginSchema } from "@/lib/validators/auth";
@@ -26,7 +27,7 @@ async function setSessionCookie(
     secure: false, // Temporarily disabled for HTTP testing
     sameSite: "lax",
     maxAge: COOKIE_TTL,
-    path: "/",
+    path: sessionCookiePath,
   });
 }
 
@@ -157,6 +158,6 @@ export async function signupAction(
 
 export async function logoutAction() {
   const store = await cookies();
-  store.delete(COOKIE_NAME);
+  store.delete({ name: COOKIE_NAME, path: sessionCookiePath });
   redirect("/login");
 }

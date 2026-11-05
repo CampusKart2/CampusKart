@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { loginSchema } from "@/lib/validators/auth";
 import { query } from "@/lib/db";
+import { sessionCookiePath } from "@/lib/routes";
 import { signSession } from "@/lib/session";
 
 const COOKIE_NAME = "campuskart_session";
@@ -124,7 +125,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       secure:   false, // Temporarily disabled for EC2 HTTP testing
       sameSite: "lax",
       maxAge:   COOKIE_TTL,
-      path:     "/",
+      path:     sessionCookiePath,
     });
 
     return response;

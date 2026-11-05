@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
+import { sessionCookiePath } from "@/lib/routes";
 
 // ─── GET /api/auth/session ─────────────────────────────────────────────────────
 //
@@ -18,7 +19,7 @@ export async function GET(): Promise<NextResponse> {
       { authenticated: false },
       { status: 200 }
     );
-    response.cookies.delete("campuskart_session");
+    response.cookies.delete({ name: "campuskart_session", path: sessionCookiePath });
     return response;
   }
 

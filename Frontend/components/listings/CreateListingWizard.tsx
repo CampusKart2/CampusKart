@@ -208,7 +208,7 @@ export default function CreateListingWizard({
   const [isDragActive, setIsDragActive] = useState(false);
 
   const router = useRouter();
-  const uploader = genUploader<OurFileRouter>();
+  const uploader = genUploader<OurFileRouter>({ url: apiPath("/api/uploadthing") });
   const photoCleanupRef = useRef<PhotoItem[]>(photos);
 
   useEffect(() => {

@@ -1,6 +1,11 @@
 services:
   campuskart:
-    build: .
+    # Run with --env-file .env.local so these build args resolve.
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_BASE_PATH: ${NEXT_PUBLIC_BASE_PATH:-/campuskart}
+        NEXT_PUBLIC_GETSTREAM_API_KEY: ${NEXT_PUBLIC_GETSTREAM_API_KEY:-}
     container_name: campuskart-container
     ports:
       - "127.0.0.1:3002:3000"
