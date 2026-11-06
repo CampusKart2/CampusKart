@@ -4,6 +4,7 @@ import { useState } from "react";
 import { z } from "zod";
 import { useRouter } from "next/navigation";
 
+import { apiPath } from "@/lib/routes";
 import type { ListingStatus } from "@/lib/types/listing";
 
 const soldResponseSchema = z.object({
@@ -40,7 +41,7 @@ export default function MarkAsSoldButton({
 
     try {
       const response = await fetch(
-        `/api/listings/${encodeURIComponent(listingId)}/sold`,
+        apiPath(`/api/listings/${encodeURIComponent(listingId)}/sold`),
         {
           method: "PATCH",
           headers: {

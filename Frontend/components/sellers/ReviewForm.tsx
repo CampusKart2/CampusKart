@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { z } from "zod";
 import StarRatingInput from "@/components/sellers/StarRatingInput";
+import { apiPath } from "@/lib/routes";
 
 // ---------------------------------------------------------------------------
 // Zod schema — mirrors the backend createReviewBodySchema (max 500 chars per AC)
@@ -74,7 +75,7 @@ export default function ReviewForm({
     setStatus("submitting");
 
     try {
-      const res = await fetch(`/api/users/${encodeURIComponent(sellerId)}/reviews`, {
+      const res = await fetch(apiPath(`/api/users/${encodeURIComponent(sellerId)}/reviews`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(parsed.data),

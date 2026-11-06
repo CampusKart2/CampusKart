@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { SESSION_COOKIE_NAME, sessionCookiePath } from "@/lib/routes";
 import { cookies } from "next/headers";
 import { z } from "zod";
 import { pool, query } from "@/lib/db";
 import { verifySession, signSession } from "@/lib/session";
 
-const COOKIE_NAME = "campuskart_session";
+const COOKIE_NAME = SESSION_COOKIE_NAME;
 const COOKIE_TTL = 60 * 60 * 24 * 7; // 7 days in seconds
 
 // ─── Validation ────────────────────────────────────────────────────────────────
@@ -130,7 +131,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
           secure:   process.env.NODE_ENV === "production",
           sameSite: "lax",
           maxAge:   COOKIE_TTL,
-          path:     "/",
+          path:     sessionCookiePath,
         });
       }
     }

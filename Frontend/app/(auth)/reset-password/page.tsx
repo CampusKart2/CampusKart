@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { apiPath } from "@/lib/routes";
 import { resetPasswordSchema } from "@/lib/validators/auth";
 
 interface FieldErrors {
@@ -53,7 +54,7 @@ function ResetPasswordForm() {
     setPending(true);
 
     try {
-      const response = await fetch("/api/auth/reset-password", {
+      const response = await fetch(apiPath("/api/auth/reset-password"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(parsed.data),

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { SESSION_COOKIE_NAME } from "@/lib/routes";
 import { randomBytes } from "crypto";
 import { cookies } from "next/headers";
 import { verifySession } from "@/lib/session";
@@ -12,7 +13,7 @@ import { sendVerificationEmail } from "@/lib/email";
 export async function POST(): Promise<NextResponse> {
   // 1. Authenticate via session cookie
   const store = await cookies();
-  const rawToken = store.get("campuskart_session")?.value ?? "";
+  const rawToken = store.get(SESSION_COOKIE_NAME)?.value ?? "";
   const session = rawToken ? await verifySession(rawToken) : null;
 
   if (!session) {

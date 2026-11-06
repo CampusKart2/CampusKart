@@ -1,0 +1,20 @@
+# Separate dev stack. The fixed project name and container name keep it from
+# replacing the live campuskart-container.
+#   docker compose -f docker-compose.dev.yml --env-file .env.local up -d --build
+name: campuskart-dev
+
+services:
+  campuskart-dev:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_BASE_PATH: ${NEXT_PUBLIC_BASE_PATH:-/campuskart}
+        NEXT_PUBLIC_GETSTREAM_API_KEY: ${NEXT_PUBLIC_GETSTREAM_API_KEY:-}
+    image: campuskart-dev
+    container_name: campuskart-dev
+    ports:
+      - "127.0.0.1:3102:3000"
+    env_file:
+      - .env.local
+    environment:
+      SERVER_INTERNAL_APP_URL: http://127.0.0.1:3000

@@ -48,7 +48,7 @@ function assertStatus(label, actual, expected) {
 }
 
 async function main() {
-  const baseUrl = (process.env.BASE_URL || "http://localhost:3000").replace(/\/+$/, "");
+  const baseUrl = (process.env.BASE_URL || "http://localhost:3002/campuskart").replace(/\/+$/, "");
   const actorSessionCookie = requireEnv("ACTOR_SESSION_COOKIE");
   const targetUserId = requireEnv("TARGET_USER_ID");
   const missingUserId = process.env.MISSING_USER_ID || "00000000-0000-0000-0000-000000000001";

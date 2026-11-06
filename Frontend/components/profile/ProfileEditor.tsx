@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState, type ChangeEvent } from "react";
 import { Camera, X } from "lucide-react";
 import { genUploader } from "uploadthing/client";
+import { apiPath } from "@/lib/routes";
 import type { OurFileRouter } from "@/lib/uploadthing";
 
 type EditableProfileUser = {
@@ -33,7 +34,7 @@ export default function ProfileEditor({ initialUser }: ProfileEditorProps) {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [avatarUploadError, setAvatarUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const uploader = genUploader<OurFileRouter>();
+  const uploader = genUploader<OurFileRouter>({ url: apiPath("/api/uploadthing") });
 
   const initials = useMemo(() => initialsFromName(user.full_name), [user.full_name]);
 
@@ -49,7 +50,7 @@ export default function ProfileEditor({ initialUser }: ProfileEditorProps) {
     setIsSaving(true);
 
     try {
-      const response = await fetch("/api/users/me", {
+      const response = await fetch(apiPath("/api/users/me"), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

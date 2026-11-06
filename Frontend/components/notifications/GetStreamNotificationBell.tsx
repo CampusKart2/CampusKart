@@ -11,6 +11,7 @@ import {
 } from "react";
 import { StreamChat, type Event } from "stream-chat";
 
+import { apiPath } from "@/lib/routes";
 import { chatTokenResponseSchema } from "@/lib/validators/chat";
 import {
   notificationsListResponseSchema,
@@ -84,7 +85,7 @@ export default function GetStreamNotificationBell({ userId }: Props) {
     setListLoading(true);
     setListError("");
     try {
-      const res = await fetch("/api/notifications?limit=10", {
+      const res = await fetch(apiPath("/api/notifications?limit=10"), {
         credentials: "include",
       });
       const raw: unknown = await res.json();
@@ -147,7 +148,7 @@ export default function GetStreamNotificationBell({ userId }: Props) {
     async function connect(): Promise<void> {
       setStatus("connecting");
       try {
-        const res = await fetch("/api/chat/token", {
+        const res = await fetch(apiPath("/api/chat/token"), {
           method: "POST",
           credentials: "include",
         });

@@ -2,6 +2,7 @@
 
 import { Mail, RefreshCw, ShieldCheck } from "lucide-react";
 import { useState, useTransition } from "react";
+import { apiPath } from "@/lib/routes";
 
 export default function VerifyEmailCard() {
   const [message, setMessage] = useState<string | null>(null);
@@ -14,7 +15,7 @@ export default function VerifyEmailCard() {
 
     startTransition(async () => {
       try {
-        const res = await fetch("/api/auth/verify-email/resend", {
+        const res = await fetch(apiPath("/api/auth/verify-email/resend"), {
           method: "POST",
         });
         const body = (await res.json()) as { message?: string; error?: string };

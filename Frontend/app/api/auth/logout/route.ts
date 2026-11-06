@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { appPath, SESSION_COOKIE_NAME, sessionCookiePath } from "@/lib/routes";
 import { verifySession } from "@/lib/session";
 
-const COOKIE_NAME = "campuskart_session";
+const COOKIE_NAME = SESSION_COOKIE_NAME;
 
 // ─── Shared logout helper ──────────────────────────────────────────────────────
 //
@@ -16,7 +17,7 @@ function clearSession(body: object, status: number): NextResponse {
     secure:   process.env.NODE_ENV === "production",
     sameSite: "lax",
     maxAge:   0, // instructs the browser to delete the cookie immediately
-    path:     "/",
+    path:     sessionCookiePath,
   });
   return res;
 }
@@ -37,7 +38,7 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
   }
 
   // T-15: redirectUrl tells REST/SPA consumers where to navigate post-logout.
-  return clearSession({ message: "Logged out.", redirectUrl: "/login" }, 200);
+  return clearSession({ message: "Logged out.", redirectUrl: appPath("/login") }, 200);
 }
 
 // ─── POST /api/auth/logout ─────────────────────────────────────────────────────

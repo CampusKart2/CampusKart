@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getCategoryDisplay } from "@/lib/category-display";
+import { appUrl } from "@/lib/routes";
 
 /** Category returned by GET /api/categories (with listing_count). */
 interface CategoryWithCount {
@@ -10,8 +11,7 @@ interface CategoryWithCount {
 }
 
 async function fetchCategories(): Promise<CategoryWithCount[]> {
-  const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
-  const res = await fetch(`${base}/api/categories`, { cache: "no-store" });
+  const res = await fetch(appUrl("/api/categories"), { cache: "no-store" });
   if (!res.ok) return [];
   const data = (await res.json()) as { categories?: CategoryWithCount[] };
   return data.categories ?? [];

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { apiPath } from "@/lib/routes";
 
 type ResendState = "idle" | "pending" | "sent" | "error";
 
@@ -15,7 +16,7 @@ export default function UnverifiedEmailBanner() {
     setResendState("pending");
     startTransition(async () => {
       try {
-        const res = await fetch("/api/auth/verify-email/resend", {
+        const res = await fetch(apiPath("/api/auth/verify-email/resend"), {
           method: "POST",
         });
         const body = (await res.json()) as { message?: string; error?: string };

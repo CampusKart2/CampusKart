@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { apiPath } from "@/lib/routes";
 
 interface ReportedListing {
   listing_id: string;
@@ -47,8 +48,8 @@ export default function AdminPage() {
 
     try {
       const [reportsResponse, usersResponse] = await Promise.all([
-        fetch("/api/admin/reports"),
-        fetch("/api/admin/users"),
+        fetch(apiPath("/api/admin/reports")),
+        fetch(apiPath("/api/admin/users")),
       ]);
 
       if (reportsResponse.status === 401 || usersResponse.status === 401) {
@@ -88,7 +89,7 @@ export default function AdminPage() {
     setError(null);
 
     try {
-      const response = await fetch("/api/admin/login", {
+      const response = await fetch(apiPath("/api/admin/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -115,7 +116,7 @@ export default function AdminPage() {
     setError(null);
 
     try {
-      const response = await fetch(`/api/admin/listings/${id}/remove`, {
+      const response = await fetch(apiPath(`/api/admin/listings/${id}/remove`), {
         method: "PATCH",
       });
 
@@ -137,7 +138,7 @@ export default function AdminPage() {
     setError(null);
 
     try {
-      const response = await fetch(`/api/admin/users/${id}/deactivate`, {
+      const response = await fetch(apiPath(`/api/admin/users/${id}/deactivate`), {
         method: "PATCH",
       });
 
@@ -159,7 +160,7 @@ export default function AdminPage() {
     setError(null);
 
     try {
-      const response = await fetch(`/api/admin/users/${id}/activate`, {
+      const response = await fetch(apiPath(`/api/admin/users/${id}/activate`), {
         method: "PATCH",
       });
 

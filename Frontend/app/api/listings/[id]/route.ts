@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { SESSION_COOKIE_NAME } from "@/lib/routes";
 import { z } from "zod";
 import { cookies } from "next/headers";
 import { createHash, randomUUID } from "crypto";
@@ -29,7 +30,7 @@ type DbListingWithSellerRow = {
 
 type ListingWithSeller = Listing & { seller: { id: string; name: string } };
 
-const SESSION_COOKIE = "campuskart_session";
+const SESSION_COOKIE = SESSION_COOKIE_NAME;
 const ANON_COOKIE = "campuskart_anon_session";
 
 /**

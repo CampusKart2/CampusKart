@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
+import { apiPath } from "@/lib/routes";
 
 interface MessageSellerCtaProps {
   sellerName: string;
@@ -25,7 +26,7 @@ export default function MessageSellerCta({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/messages/channel", {
+      const res = await fetch(apiPath("/api/messages/channel"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ listingId, sellerId, listingTitle, sellerName }),

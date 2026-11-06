@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import { appUrl } from "@/lib/routes";
 import type { Listing } from "@/lib/types/listing";
 
 export type ListingWithSeller = Listing & {
@@ -14,8 +15,7 @@ export type ListingWithSeller = Listing & {
 export async function fetchListingById(
   id: string
 ): Promise<ListingWithSeller> {
-  const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
-  const res = await fetch(`${base}/api/listings/${encodeURIComponent(id)}`, {
+  const res = await fetch(appUrl(`/api/listings/${encodeURIComponent(id)}`), {
     cache: "no-store",
   });
 
